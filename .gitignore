@@ -1,4 +1,4 @@
 
-Make/linux64GccDPInt32Opt/*
+src/Make/linux64GccDPInt32Opt/*
 
-bak/*
+src/bak/*
