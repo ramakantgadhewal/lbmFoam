@@ -10,7 +10,8 @@
 
 # usage
 
-  1. Compile source code using wmake in the source directory: this will create a new application in $FOAM_USER_APPBIN\n\t\The latter can be created through 'mkdir -p $FOAM_USER_APPBIN'
+  1. Compile source code using wmake in the source directory: this will create a new application in $FOAM_USER_APPBIN
+      The latter can be created through 'mkdir -p $FOAM_USER_APPBIN'
 
   2. Test the application in the corresponding directory in the ./test/ folder
 
