@@ -2,15 +2,22 @@
 
 # ignore source files
 
-Make/linux64GccDPInt32Opt/*
+src/lbm1Foam/Make/linux64GccDPInt32Opt/*
+src/lbm2Foam/Make/linux64GccDPInt32Opt/*
 
 bak/*
 
 
 # ignore test files
-test/0.*
-test/1*
-test/2*
-test/3*
-test/4*
-test/5*
+test/lbm1Foam/0.*
+test/lbm1Foam/1*
+test/lbm1Foam/2*
+test/lbm1Foam/3*
+test/lbm1Foam/4*
+test/lbm1Foam/5*
+test/lbm2Foam/0.*
+test/lbm2Foam/1*
+test/lbm2Foam/2*
+test/lbm2Foam/3*
+test/lbm2Foam/4*
+test/lbm2Foam/5*
