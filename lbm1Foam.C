@@ -25,6 +25,7 @@ Application
     lbm1Foam
 
 Description
+    test solver for 1D transport problems
 
 \*---------------------------------------------------------------------------*/
 

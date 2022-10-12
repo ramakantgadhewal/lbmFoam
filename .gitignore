@@ -2,9 +2,9 @@
 
 # ignore source files
 
-src/Make/linux64GccDPInt32Opt/*
+Make/linux64GccDPInt32Opt/*
 
-src/bak/*
+bak/*
 
 
 # ignore test files
