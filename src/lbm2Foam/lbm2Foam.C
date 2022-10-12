@@ -44,8 +44,6 @@ int main(int argc, char *argv[])
     #include "createControl.H"
 
     #include "createFields.H"
-    #include "createFvConstraints.H"
-    #include "createFvModels.H"
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,52 +51,52 @@ int main(int argc, char *argv[])
 
     Info<< "\nTime loop\n" << endl;
 
-	while(runTime.run())
-	{
-        runTime++;
+  	while(runTime.run())
+  	{
+          runTime++;
 
-		while (pimple.loop())
-		{
-			runTime++;
+  		while (pimple.loop())
+  		{
+  			runTime++;
 
-			Info<< "Time = " << runTime.timeName() << nl << endl;
+  			Info<< "Time = " << runTime.timeName() << nl << endl;
 
-			// solve LB equations
-			#include "fEqn.H"
+  			// solve LB equations
+  			#include "fEqn.H"
 
-			// load macroscopic fields from particle distributions
-			rho *= 0.;
-			momentum *= 0.;
-			forAll(f, dI)
-			{
-				rho += f[dI];
-				momentum += c[dI]*f[dI];
-			}
-			U = momentum/rho;
-			p = pRef*dimPres + (rho-density)/ICS2;
+  			// load macroscopic fields from particle distributions
+  			rho *= 0.;
+  			momentum *= 0.;
+  			forAll(f, dI)
+  			{
+  				rho += f[dI];
+  				momentum += c[dI]*f[dI];
+  			}
+  			U = momentum/rho;
+  			p = pRef*dimPres + (rho-density)/ICS2;
 
-			// load equilibrium distributions from macroscopic fields
-			forAll(feq, dI)
-			{
-				feq[dI] = W[dI]*rho*( 1.0
-									+ ICS2*(c[dI]&U)
-									- 0.5*ICS2*(U&U)
-									+ 0.5*ICS4*(c[dI]&U)*(c[dI]&U)
-									);
-			}
+  			// load equilibrium distributions from macroscopic fields
+  			forAll(feq, dI)
+  			{
+  				feq[dI] = W[dI]*rho*( 1.0
+  									+ ICS2*(c[dI]&U)
+  									- 0.5*ICS2*(U&U)
+  									+ 0.5*ICS4*(c[dI]&U)*(c[dI]&U)
+  									);
+  			}
 
-			runTime.write();
-		}
+  			runTime.write();
+  		}
 
-		Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-        << "    ClockTime = " << runTime.elapsedClockTime() << " s"
-        << nl << endl;
+  		Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+          << "    ClockTime = " << runTime.elapsedClockTime() << " s"
+          << nl << endl;
 
-	}
+  	}
 
-	Info<< "End\n" << endl;
+  	Info<< "End\n" << endl;
 
-    return 0;
+      return 0;
 }
 
 

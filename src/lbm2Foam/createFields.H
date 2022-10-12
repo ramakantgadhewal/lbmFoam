@@ -41,11 +41,11 @@
 
 
 
-    // Read LBM user options from controlDict
+  // Read LBM user options from controlDict
 
 	// read number of directions
 	int dirNum =
-	runTime.controlDict().lookupOrDefault<scalar>("directions", 3);
+	runTime.controlDict().lookupOrDefault<scalar>("directions", 9);
 	// read space discretization parameter
 	scalar deltaX =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaX", 1);
@@ -100,7 +100,7 @@
 
 
 
-    Info<< "Creating LB fields\n" << endl;
+  Info<< "Creating LB fields\n" << endl;
 
 
 	PtrList<volScalarField>			f(dirNum);		// particle distribution
@@ -109,7 +109,7 @@
 	PtrList<surfaceScalarField>		xi(dirNum); 	// lattice velocities surface flux
 
 	// compute velocity set properties
-	#include "D1Q3.H"
+	#include "D2Q9.H"
 
 	// lattice velocity magnitude
 	dimensionedScalar cl(dimVel*deltaX/deltaT);
@@ -259,3 +259,7 @@
 			)
 		);
 	}
+
+
+	#include "createFvConstraints.H"
+	#include "createFvModels.H"
