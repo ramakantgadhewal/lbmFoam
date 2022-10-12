@@ -15,9 +15,9 @@
 			);
 
 			fiEqn.relax();
-			fvOptions.constrain(fiEqn);
+			fvConstraints.constrain(fiEqn);
 			fiEqn.solve();
-			fvOptions.correct(f[dI]);
+			fvConstraints.constrain(f[dI]);
 
 		} // end internal cycles loop
 

@@ -26,13 +26,13 @@
 		rho += f[dI];
 		momentum += c[dI]*f[dI];
 	}
-	scalar errIC = average(1.-mag(momentum)/rho/mag(U)).value();
+	scalar errIC = 1;
 
 	Info<< "Starting velocity error = " << errIC << nl << endl;
 
 	// loop to fit density field and velocity field
 	scalar tolIC =
-		runTime.controlDict().lookupOrDefault<scalar>("initTol", 1e-6);
+		runTime.controlDict().lookupOrDefault<scalar>("initTol", 1e-9);
 	unsigned int iterICmax =
 		runTime.controlDict().lookupOrDefault<scalar>("initIterMax", 1e4);
 	unsigned int iIC = 0;
@@ -66,7 +66,8 @@
 		// compute relative incremental error
 		errIC =
 		(
-			average(1.-mag(momentum)/rho/mag(U))
+			//average(1.-mag(momentum)/rho/mag(U)) // velocity error
+			average(1.-rho/rho_prev) // pressure error
 		).value();
 
 		iIC++;
@@ -75,16 +76,21 @@
 	// evaluate initial pressure distribution
 	p = pRef*dimPres + (rho-density)/ICS2;
 
-	Info<< "Velocity error reached = " << errIC << nl
+
+	Info<<" Initialization iterations = " << iIC << nl
+		<< "Velocity error reached = " << errIC << nl
 		<< "Initial pressure error = " << average(mag(1.0-rho/rho_prev)).value() << nl
 		<< "Mass loss = " << fvc::domainIntegrate(density-rho).value() << nl
 		<< "Mass fraction = " << average(rho/rho0).value() << nl
 		<< "Velocity fraction = " << average(mag(momentum)/rho/mag(U)).value() << nl << endl;
 
+	// overwrite discontinuous velocity
+	U = momentum/rho;
 
 	// write IO
 	forAll(f, dI)
 	{
 		(f[dI]).write();
 	}
+	U.write();
 	p.write();
