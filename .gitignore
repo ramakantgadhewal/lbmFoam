@@ -1,4 +1,15 @@
 
+
+# ignore source files
+
 src/Make/linux64GccDPInt32Opt/*
 
 src/bak/*
+
+
+# ignore test files
+test/0.*
+test/1*
+test/2*
+test/3*
+test/*
