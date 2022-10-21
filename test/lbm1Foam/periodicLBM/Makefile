@@ -39,18 +39,17 @@ vtk: $(OUTLOG)
 
 
 # clean functions
-meshClean:
+cleanMesh:
 	rm -r -f $(MESH_DIR)
 	rm -f $(MESHLOG)
 
-vtkClean:
+cleanVtk:
 	rm -r -f $(OUT_DIR)
 	rm -f $(OUTLOG)
 
-simClean:
+cleanSim:
 	rm -r -f $(CODESTRAM_DIR)
 	rm -f $(SIMLOG)
 
-clean: meshClean simClean vtkClean
+clean: cleanMesh cleanSim cleanVtk
 	rm -r -f $(LOG_DIR)
-	rm -r -f $(CODESTRAM_DIR)
