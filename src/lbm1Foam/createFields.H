@@ -44,22 +44,22 @@
     // Read LBM user options from controlDict
 
 	// read number of directions
-	int dirNum =
+	const unsigned int dirNum =
 	runTime.controlDict().lookupOrDefault<scalar>("directions", 3);
 	// read space discretization parameter
-	scalar deltaX =
+	const scalar deltaX =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaX", 1);
 	// read time discretization parameter
-	scalar deltaT =
+	const scalar deltaT =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaT", 1);
 	// read flow density
-	scalar rho0 =
+	const scalar rho0 =
 	runTime.controlDict().lookupOrDefault<scalar>("density", 1000);
 	// read reference pressure
-	scalar pRef =
+	const scalar pRef =
 	runTime.controlDict().lookupOrDefault<scalar>("pressure", 1.01e5);
 	// read number of internal pimple loops
-	int internal =
+	const unsigned int internal =
 	runTime.controlDict().lookupOrDefault<scalar>("internal", 1);
 
 
@@ -103,10 +103,12 @@
     Info<< "Creating LB fields\n" << endl;
 
 
-	PtrList<volScalarField>			f(dirNum);		// particle distribution
-	PtrList<volScalarField>			feq(dirNum);	// equilibrium distribution
-	PtrList<volVectorField> 		c(dirNum);		// lattice velocities
-	PtrList<surfaceScalarField>		xi(dirNum); 	// lattice velocities surface flux
+	PtrList<volScalarField>				f(dirNum);			// particle distribution
+	PtrList<volScalarField>				feq(dirNum);		// equilibrium distribution
+	PtrList<volVectorField> 			c(dirNum);			// lattice velocities
+	PtrList<volScalarField> 			cDotU(dirNum);  // scalar product between U end c
+	PtrList<volScalarField> uEqFactor(dirNum);  // omega * feq_i = (<-this) * sum_j[f_j]
+	PtrList<surfaceScalarField>		xi(dirNum); 		// lattice velocities surface flux
 
 	// compute velocity set properties
 	#include "D1Q3.H"
@@ -186,16 +188,16 @@
 	volVectorField momentum("momentum", rho*U);
 
 
-	forAll(f, iSet)
+	forAll(f, dI)
 	{
 		f.set
 		(
-			iSet,
+			dI,
 			new volScalarField
 			(
 				IOobject
 				(
-					"f_"+Foam::name(iSet),
+					"f_"+Foam::name(dI),
 					runTime.timeName(),
 					mesh,
 					IOobject::MUST_READ,
@@ -207,12 +209,12 @@
 
 		feq.set
 		(
-			iSet,
+			dI,
 			new volScalarField
 			(
 				IOobject
 				(
-					"feq_"+Foam::name(iSet),
+					"feq_"+Foam::name(dI),
 					runTime.timeName(),
 					mesh,
 					IOobject::NO_READ,
@@ -225,25 +227,62 @@
 
 		c.set
 		(
-			iSet,
+			dI,
 			new volVectorField
 			(
 				IOobject
 				(
-					"c_"+Foam::name(iSet),
+					"c_"+Foam::name(dI),
 					runTime.timeName(),
 					mesh,
 					IOobject::NO_READ,
 					IOobject::NO_WRITE
 				),
 				mesh,
-				dimensionedVector(cl*lattVect[iSet])
+				dimensionedVector(cl*lattVect[dI])
+			)
+		);
+
+		cDotU.set
+		(
+			dI,
+			new volScalarField
+			(
+				IOobject
+				(
+					"cDotU_"+Foam::name(dI),
+					runTime.timeName(),
+					mesh,
+					IOobject::NO_READ,
+					IOobject::NO_WRITE
+				),
+				(c[dI] & U)
+			)
+		);
+
+		uEqFactor.set
+		(
+			dI,
+			new volScalarField
+			(
+				IOobject
+				(
+					"rEf_"+Foam::name(dI),
+					runTime.timeName(),
+					mesh,
+					IOobject::NO_READ,
+					IOobject::NO_WRITE
+				),
+				W[dI]*( 1.0
+									+ ICS2*cDotU[dI]
+									- 0.5*ICS2*(U&U)
+									+ 0.5*ICS4*cDotU[dI]*cDotU[dI])
 			)
 		);
 
 		xi.set
 		(
-			iSet,
+			dI,
 			new surfaceScalarField
 			(
 				IOobject
@@ -254,8 +293,8 @@
 					IOobject::READ_IF_PRESENT,
 					IOobject::AUTO_WRITE
 				),
-				//fvc::interpolate(c[iSet]) & mesh.Sf() // Eric choice
-				fvc::flux(c[iSet]) // this is usually employed for advection terms
+				//fvc::interpolate(c[dI]) & mesh.Sf() // Eric choice
+				fvc::flux(c[dI]) // this is usually employed for advection terms
 			)
 		);
 	}

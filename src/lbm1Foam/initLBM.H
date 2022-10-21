@@ -1,96 +1,69 @@
 
+	// initialization options
+	const scalar tolIC =
+		runTime.controlDict().lookupOrDefault<scalar>("initTol", 1e-12);
+
+	const unsigned int iterICmax =
+		runTime.controlDict().lookupOrDefault<scalar>("initIterMax", 1e6);
+
+	const unsigned int iterICerrEval =
+		runTime.controlDict().lookupOrDefault<scalar>("initErrEval", 1e2);
+
 	Info<< "\nInitialize simulation\n" << endl;
 
 	// start function objects
 	runTime.functionObjects().start();
 
-	// compute domain volume
-	scalar volume =
-	(
-		fvc::domainIntegrate(rho/rho)
-	).value();
-	Info<< "Volume = " << volume << nl << endl;
-
 	// Initialize particle mass distribution and
 	rho*=0.;
-	momentum*=0.;
-	scalar uIn=
-		runTime.controlDict().lookupOrDefault<scalar>("initUfactor", 0);
 	forAll(f, dI)
 	{
-		f[dI] = W[dI]*rho_prev*( 1.0
-							  + ICS2*(c[dI]&U)*uIn
-							  + 0.5*ICS4*(c[dI]&U)*uIn*(c[dI]&U)*uIn
-							  - 0.5*ICS2*(U&U)*uIn
-							  );
+		// initialize as zero velocity - uniform pressure
+		f[dI] = W[dI]*rho_prev;
 		rho += f[dI];
-		momentum += c[dI]*f[dI];
 	}
-	scalar errIC = 1;
-
-	Info<< "Starting velocity error = " << errIC << nl << endl;
 
 	// loop to fit density field and velocity field
-	scalar tolIC =
-		runTime.controlDict().lookupOrDefault<scalar>("initTol", 1e-9);
-	unsigned int iterICmax =
-		runTime.controlDict().lookupOrDefault<scalar>("initIterMax", 1e4);
+	scalar errIC = 1;
 	unsigned int iIC = 0;
+
 	while(errIC>tolIC && iIC<iterICmax)
 	{
-		// load previous density
-		rho_prev = rho;
-
-		// equilibrium ditribution
+		// evaluate equilibrium distribution at fixed
+		// velocity field U
 		forAll(feq, dI)
 		{
-			feq[dI] = W[dI]*rho*( 1.0
-								+ ICS2*(c[dI]&U)
-								+ 0.5*ICS4*(c[dI]&U)*(c[dI]&U)
-								- 0.5*ICS2*(U&U)
-								);
+			feq[dI] = uEqFactor[dI]*rho;
 		}
 
 		// solve LBE
 		#include "fEqn.H"
 
-		// evaluate new density and velocity
-		rho*=0.;
-		momentum*=0.;
-		forAll(f, dI)
-		{
-			rho+=f[dI];
-			momentum+=c[dI]*f[dI];
-		}
-
 		// compute relative incremental error
-		errIC =
-		(
-			//average(1.-mag(momentum)/rho/mag(U)) // velocity error
-			average(1.-rho/rho_prev) // pressure error
-		).value();
+		if(iIC%iterICerrEval==0)
+		{
+			errIC =
+			(
+				average(mag(1.-rho/rho_prev)) // pressure error
+			).value();
 
+			// load previous density
+			rho_prev = rho;
+		}
 		iIC++;
 	}
+
+	Info<< " Initialization iterations = "
+			<< iIC << nl
+			<< " Initializzation pressure errror = "
+			<< errIC << nl << endl;
 
 	// evaluate initial pressure distribution
 	p = pRef*dimPres + (rho-density)/ICS2;
 
-
-	Info<<" Initialization iterations = " << iIC << nl
-		<< "Velocity error reached = " << errIC << nl
-		<< "Initial pressure error = " << average(mag(1.0-rho/rho_prev)).value() << nl
-		<< "Mass loss = " << fvc::domainIntegrate(density-rho).value() << nl
-		<< "Mass fraction = " << average(rho/rho0).value() << nl
-		<< "Velocity fraction = " << average(mag(momentum)/rho/mag(U)).value() << nl << endl;
-
-	// overwrite discontinuous velocity
-	U = momentum/rho;
-
-	// write IO
+	// write IO objects
 	forAll(f, dI)
 	{
 		(f[dI]).write();
 	}
-	U.write();
 	p.write();

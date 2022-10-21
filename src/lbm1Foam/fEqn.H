@@ -1,17 +1,16 @@
-// Lattice Boltzman equation discretization
+{// BGK Lattice Boltzman equation discretization
 
-	forAll(f, dI)
+	for(unsigned int dI=1; dI<dirNum; dI++)
 	{
-		for(int ic=0; ic<internal; ++ic)
+		for(unsigned int ic=0; ic<internal; ++ic)
 		{
 			fvScalarMatrix fiEqn
 			(
-				fvm::ddt(f[dI])
+					fvm::ddt(f[dI])
 			  + fvm::div(xi[dI], f[dI])
+				+ fvm::Sp(omega, f[dI])
 				==
-				fvc::Sp(omega, feq[dI])
-			  - fvm::Sp(omega, f[dI])
-			//+  fvOptions(f[dI])
+					fvc::Sp(omega, feq[dI])
 			);
 
 			fiEqn.relax();
@@ -23,4 +22,27 @@
 
 	} // end loop over velocity set
 
-	// dt(f_i) + c_i Grad(f_i) = -1/tau (f_i - f_eq)
+	// solve finally for the resting distribution
+	fvScalarMatrix f0Eqn
+	(
+			fvm::ddt(f[0])
+		+ fvm::Sp(omega, f[0])
+		==
+			fvc::Sp(omega, feq[0])
+	);
+
+	f0Eqn.relax();
+	fvConstraints.constrain(f0Eqn);
+	f0Eqn.solve();
+	fvConstraints.constrain(f[0]);
+
+	// load particle distributions moments
+	rho *= 0.;
+	momentum *= 0.;
+	forAll(f, dI)
+	{
+		rho += f[dI];
+		momentum += c[dI]*f[dI];
+	}
+
+} // end of anonymous namespace

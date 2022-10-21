@@ -49,46 +49,44 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-	  #include "initLBM.H"
+	#include "initLBM.H"
 
-    Info<< "\nTime loop\n" << endl;
+  Info<< "\nTime loop\n" << endl;
 
 	while(runTime.run())
 	{
-        runTime++;
+    runTime++;
+
+    Info<< "Time = " << runTime.timeName() << nl << endl;
 
 		while (pimple.loop())
 		{
-			runTime++;
-
-			Info<< "Time = " << runTime.timeName() << nl << endl;
 
 			// solve LB equations
 			#include "fEqn.H"
 
-			// load macroscopic fields from particle distributions
-			rho *= 0.;
-			momentum *= 0.;
-			forAll(f, dI)
-			{
-				rho += f[dI];
-				momentum += c[dI]*f[dI];
-			}
-			U = momentum/rho;
-			p = pRef*dimPres + (rho-density)/ICS2;
+      Info<< "System mass = "
+          << (fvc::domainIntegrate(rho)).value() << nl << endl;
 
-			// load equilibrium distributions from macroscopic fields
-			forAll(feq, dI)
-			{
-				feq[dI] = W[dI]*rho*( 1.0
-									+ ICS2*(c[dI]&U)
-									- 0.5*ICS2*(U&U)
-									+ 0.5*ICS4*(c[dI]&U)*(c[dI]&U)
-									);
-			}
+      // reconstruct macroscopic fileds
+      U = momentum/rho;
+      p = pRef*dimPres + (rho-density)/ICS2;
 
-			runTime.write();
-		}
+      // load equilibrium distributions from macroscopic fields
+      forAll(feq, dI)
+      {
+        cDotU[dI] 	= (c[dI] & U);
+        uEqFactor[dI] = W[dI]*( 1.0
+                                    + ICS2*cDotU[dI]
+                                    - 0.5*ICS2*(U&U)
+                                    + 0.5*ICS4*cDotU[dI]*cDotU[dI]
+                                  );
+        feq[dI] 		= rho*uEqFactor[dI];
+      }
+
+		} // end of PIMPLE loop
+
+    runTime.write();
 
 		Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
         << "    ClockTime = " << runTime.elapsedClockTime() << " s"
@@ -98,7 +96,7 @@ int main(int argc, char *argv[])
 
 	Info<< "End\n" << endl;
 
-    return 0;
+  return 0;
 }
 
 
