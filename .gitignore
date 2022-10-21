@@ -1,8 +1,13 @@
-
+##########################
 # ignore log files
+##########################
+
 *.log
 
+
+##########################
 # ignore source files
+##########################
 
 src/lbm1Foam/Make/linux64GccDPInt32Opt/*
 src/lbm2Foam/lbm2Foam/Make/linux64GccDPInt32Opt/*
@@ -12,7 +17,10 @@ src/lbm2Foam/utils/lbm2CheckTau/Make/linux64GccDPInt32Opt/*
 bak/*
 
 
+##########################
 # ignore test files
+##########################
+
 test/lbm1Foam/0.*
 test/lbm1Foam/1*
 test/lbm1Foam/2*
