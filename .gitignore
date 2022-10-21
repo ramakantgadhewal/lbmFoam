@@ -35,5 +35,9 @@ test/lbm2Foam/wallLBM/3*
 test/lbm2Foam/wallLBM/4*
 test/lbm2Foam/wallLBM/5*
 
+test/lbm1Foam/periodicLBM/constant/polyMesh/*
 test/lbm1Foam/periodicLBM/VTK/*
+test/lbm1Foam/periodicLBM/dynamicCode/*
+test/lbm1Foam/wallLBM/constant/polyMesh/*
 test/lbm1Foam/wallLBM/VTK/*
+test/lbm1Foam/wallLBM/dynamicCode/*
