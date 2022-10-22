@@ -28,12 +28,12 @@ test/lbm1Foam/periodicLBM/2*
 test/lbm1Foam/periodicLBM/3*
 test/lbm1Foam/periodicLBM/4*
 test/lbm1Foam/periodicLBM/5*
-test/lbm2Foam/wallLBM/0.*
-test/lbm2Foam/wallLBM/1*
-test/lbm2Foam/wallLBM/2*
-test/lbm2Foam/wallLBM/3*
-test/lbm2Foam/wallLBM/4*
-test/lbm2Foam/wallLBM/5*
+test/lbm1Foam/wallLBM/0.*
+test/lbm1Foam/wallLBM/1*
+test/lbm1Foam/wallLBM/2*
+test/lbm1Foam/wallLBM/3*
+test/lbm1Foam/wallLBM/4*
+test/lbm1Foam/wallLBM/5*
 
 test/lbm1Foam/periodicLBM/constant/polyMesh/*
 test/lbm1Foam/periodicLBM/VTK/*
