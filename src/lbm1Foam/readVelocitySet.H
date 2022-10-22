@@ -18,8 +18,8 @@
 		(
 			"velocitySetData",
 			runTime.constant(),
-			runTime,
-			IOobject::MUST_READ,
+			mesh,
+			IOobject::MUST_READ_IF_MODIFIED,
 			IOobject::NO_WRITE
 		)
 	);
