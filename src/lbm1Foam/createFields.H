@@ -43,9 +43,6 @@
 
     // Read LBM user options from controlDict
 
-	// read number of directions
-	const unsigned int dirNum =
-	runTime.controlDict().lookupOrDefault<scalar>("directions", 3);
 	// read space discretization parameter
 	const scalar deltaX =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaX", 1);
@@ -99,27 +96,28 @@
 	);
 
 
+	// compute velocity set properties
+	//#include "D1Q3.H"
+	#include "readVelocitySet.H"
 
-    Info<< "Creating LB fields\n" << endl;
 
+  Info<< "Creating LBM fields\n" << endl;
 
 	PtrList<volScalarField>				f(dirNum);			// particle distribution
 	PtrList<volScalarField>				feq(dirNum);		// equilibrium distribution
 	PtrList<volVectorField> 			c(dirNum);			// lattice velocities
 	PtrList<volScalarField> 			cDotU(dirNum);  // scalar product between U end c
-	PtrList<volScalarField> uEqFactor(dirNum);  // omega * feq_i = (<-this) * sum_j[f_j]
+	PtrList<volScalarField> uEqFactor(dirNum);  	// omega * feq_i = (<-this) * sum_j[f_j]
 	PtrList<surfaceScalarField>		xi(dirNum); 		// lattice velocities surface flux
 
-	// compute velocity set properties
-	#include "D1Q3.H"
 
-	// lattice velocity magnitude
+	// directions velocity component magnitude
 	dimensionedScalar cl(dimVel*deltaX/deltaT);
-	// inverse of lattice speed of sound squared
+	// inverse of speed of sound squared
 	dimensionedScalar ICS2
 	(
 		"ICS2",
-		3/cl/cl
+		lICS2/cl/cl
 	);
 	dimensionedScalar ICS4
 	(
@@ -130,7 +128,7 @@
 	Info<< "Squared Mach number = " << UMAX*UMAX*ICS2.value() << nl << endl;
 
 	// compute inverse of BGK relaxation time (omega=1/tau)
-	scalar tau((0.5 + 3*nu.value()/cl.value()/deltaX)*deltaT);
+	scalar tau((0.5 + lICS2*nu.value()/cl.value()/deltaX)*deltaT);
 	dimensionedScalar omega
 	(
 		"omega",

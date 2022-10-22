@@ -1,0 +1,38 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  4.1                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      velocitySet;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// directions number
+dirNum          3;
+
+// inverse squared of lattice speed of sound
+lICS2            3.;
+
+// weights
+// store MCD and numerators so that:
+//    w_i = wNum_i / MCD
+MCD             6.;
+wNum_0          4.;
+wNum_1          1.;
+wNum_2          1.;
+
+// lattice vectors
+lattVect_0      ( 0. 0. 0.);
+lattVect_1      ( 1. 0. 0.);
+lattVect_2      (-1. 0. 0.);
+
+
+// ************************************************************************* //
