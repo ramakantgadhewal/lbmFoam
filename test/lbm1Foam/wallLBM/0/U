@@ -16,7 +16,51 @@ FoamFile
 
 dimensions      [0 1 -1 0 0 0 0];
 
-internalField   uniform (1.75 0 0);
+internalField   #codeStream
+{
+  codeInclude
+  #{
+      #include "fvCFD.H"
+  #};
+
+  codeOptions
+  #{
+      -I$(LIB_SRC)/finiteVolume/lnInclude \
+      -I$(LIB_SRC)/meshTools/lnInclude
+  #};
+
+  codeLibs
+  #{
+      -lmeshTools \
+      -lfiniteVolume
+  #};
+
+  code
+  #{
+        // profile parameters declaration
+        scalar IwidthU2(1);
+        scalar minU(0.);
+        scalar deltaU(10);
+        scalar xLoc;
+        scalar uX;
+
+        const IOdictionary& d = static_cast<const IOdictionary&>(dict);
+        const fvMesh& mesh = refCast<const fvMesh>(d.db());
+
+        // initialize field
+        vectorField U(mesh.nCells(), vector(0.,0.,0.));
+        Info<<"1:here yes"<< endl;
+        forAll(U, cI)
+        {
+          xLoc = mesh.C()[cI].x();
+          uX = minU + deltaU*exp(-xLoc*xLoc*IwidthU2);
+          U[cI] = vector(uX,0.,0.);
+        }
+        Info<<"2:here yes"<< endl;
+        writeEntry(os, "", U);
+  #};
+};
+
 
 boundaryField
 {
