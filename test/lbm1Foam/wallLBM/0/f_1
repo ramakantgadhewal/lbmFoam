@@ -28,13 +28,15 @@ boundaryField
     {
         type            empty;
     }
-    leftAndRight_half1
+    rightWall
     {
-        type            cyclic;
+        type            lbmWall;
+        value           uniform 0;
     }
-    leftAndRight_half0
+    leftWall
     {
-        type            cyclic;
+        type            lbmWall;
+        value           uniform 0;
     }
     frontAndBack
     {

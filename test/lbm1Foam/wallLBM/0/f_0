@@ -30,52 +30,13 @@ boundaryField
     }
     rightWall
     {
-        type            fixedValue;
-        value           #codeStream
-        {
-          codeInclude
-          #{
-              #include "fvCFD.H"
-          #};
-
-          codeOptions
-          #{
-              -I$(LIB_SRC)/finiteVolume/lnInclude \
-              -I$(LIB_SRC)/meshTools/lnInclude
-          #};
-
-          codeLibs
-          #{
-              -lmeshTools \
-              -lfiniteVolume
-          #};
-
-          code
-          #{
-                const IOdictionary& d = static_cast<const IOdictionary&>
-                (
-                  dict.parent().parent()
-                );
-
-                const fvMesh& mesh = refCast<const fvMesh>(d.db());
-                const label id = mesh.boundary().findPatchID("rightWall");
-                const fvPatch& patch = mesh.boundary()[id];
-
-                // initialize field
-                scalarField f_0(patch.size(), scalar(0.));
-
-                forAll(f_0, fI)
-                {
-                  f_0[fI] =
-                }
-
-
-          #};
-        };
+        type            lbmWall;
+        value           uniform 0;
     }
     leftWall
     {
-        type            fixedValue;
+        type            lbmWall;
+        value           uniform 0;
     }
     frontAndBack
     {

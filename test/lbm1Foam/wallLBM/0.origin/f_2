@@ -8,13 +8,41 @@
 FoamFile
 {
     format      ascii;
-    class       regIOobject;
-    location    "constant/polyMesh";
-    object      cellZones;
+    class       volScalarField;
+    location    "0";
+    object      f_2;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-0
-()
+dimensions      [1 -3 0 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    topWall
+    {
+        type            empty;
+    }
+    bottomWall
+    {
+        type            empty;
+    }
+    rightWall
+    {
+        type            lbmWall;
+        value           uniform 0;
+    }
+    leftWall
+    {
+        type            lbmWall;
+        value           uniform 0;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+
 
 // ************************************************************************* //
