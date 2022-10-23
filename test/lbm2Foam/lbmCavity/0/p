@@ -8,27 +8,27 @@
 FoamFile
 {
     format      ascii;
-    class       volVectorField;
+    class       volScalarField;
     location    "0";
-    object      U;
+    object      p;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 1 -1 0 0 0 0];
+dimensions      [1 -1 -2 0 0 0 0];
 
-internalField   uniform (0 0 0);
-
+internalField   uniform 100000;
 
 boundaryField
 {
     movingWall
     {
-        type            fixedValue;
-        value           uniform (1. 0 0);
+        type            calculated;
+        value           uniform 100000;
     }
     boundaryWall
     {
-        type            noSlip;
+        type            calculated;
+        value           uniform 100000;
     }
     frontAndBack
     {
