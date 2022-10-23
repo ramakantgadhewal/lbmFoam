@@ -17,6 +17,7 @@
 			fvConstraints.constrain(fiEqn);
 			fiEqn.solve();
 			fvConstraints.constrain(f[dI]);
+			f[dI].correctBoundaryConditions();
 
 		} // end internal cycles loop
 
@@ -35,6 +36,7 @@
 	fvConstraints.constrain(f0Eqn);
 	f0Eqn.solve();
 	fvConstraints.constrain(f[0]);
+	f[0].correctBoundaryConditions();
 
 	// load particle distributions moments
 	rho *= 0.;

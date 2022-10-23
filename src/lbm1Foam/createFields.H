@@ -43,6 +43,9 @@
 
     // Read LBM user options from controlDict
 
+	// read initialization type
+	const unsigned int initScheme =
+	runTime.controlDict().lookupOrDefault<unsigned int>("initScheme", 0); 
 	// read space discretization parameter
 	const scalar deltaX =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaX", 1);
@@ -205,24 +208,6 @@
 			)
 		);
 
-		feq.set
-		(
-			dI,
-			new volScalarField
-			(
-				IOobject
-				(
-					"feq_"+Foam::name(dI),
-					runTime.timeName(),
-					mesh,
-					IOobject::NO_READ,
-					IOobject::NO_WRITE
-				),
-				mesh,
-				dimensionedScalar(dimRho*Foam::scalar(0.))
-			)
-		);
-
 		c.set
 		(
 			dI,
@@ -265,7 +250,7 @@
 			(
 				IOobject
 				(
-					"rEf_"+Foam::name(dI),
+					"uEf_"+Foam::name(dI),
 					runTime.timeName(),
 					mesh,
 					IOobject::NO_READ,
@@ -275,6 +260,23 @@
 									+ ICS2*cDotU[dI]
 									- 0.5*ICS2*(U&U)
 									+ 0.5*ICS4*cDotU[dI]*cDotU[dI])
+			)
+		);
+
+		feq.set
+		(
+			dI,
+			new volScalarField
+			(
+				IOobject
+				(
+					"feq_"+Foam::name(dI),
+					runTime.timeName(),
+					mesh,
+					IOobject::NO_READ,
+					IOobject::NO_WRITE
+				),
+				uEqFactor[dI]*rho
 			)
 		);
 

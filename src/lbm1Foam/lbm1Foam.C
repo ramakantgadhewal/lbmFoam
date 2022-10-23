@@ -49,7 +49,14 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-	#include "initLBM.H"
+  if (initScheme == 0)
+  {
+    #include "initLBMtoEq.H"
+  }
+  else
+	{
+    #include "initLBM.H"
+  }
 
   Info<< "\nTime loop\n" << endl;
 
@@ -72,10 +79,16 @@ int main(int argc, char *argv[])
       U = momentum/rho;
       p = pRef*dimPres + (rho-density)/ICS2;
 
+      const dimensionedVector gravityDU
+      (
+        dimVelocity,
+        (9.81*deltaT)*Foam::vector(-1,0,0)
+      );
+
       // load equilibrium distributions from macroscopic fields
       forAll(feq, dI)
       {
-        cDotU[dI] 	= (c[dI] & U);
+        cDotU[dI] 	= (c[dI] & (U + gravityDU));
         uEqFactor[dI] = W[dI]*( 1.0
                                     + ICS2*cDotU[dI]
                                     - 0.5*ICS2*(U&U)
