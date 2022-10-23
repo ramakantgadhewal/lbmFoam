@@ -1,30 +1,44 @@
+{// BGK Lattice Boltzman equation discretization
 
-// solve Lattice Boltzmann Equations
-
-	forAll(f, dI)
+	for(unsigned int dI=1; dI<dirNum; dI++)
 	{
 		for(unsigned int ic=0; ic<internal; ++ic)
 		{
-		// dt(f_i) + c_i Grad(f_i) = -1/tau (f_i - f_eq)
 			fvScalarMatrix fiEqn
 			(
-				fvm::ddt(f[dI])
+					fvm::ddt(f[dI])
 			  + fvm::div(xi[dI], f[dI])
 				==
-				fvc::Sp(omega, feq[dI])
-			  - fvm::Sp(omega, f[dI])
+					fvc::Sp(omega, feq[dI])
+				- fvc::Sp(omega, f[dI])
 			);
 
 			fiEqn.relax();
 			fvConstraints.constrain(fiEqn);
 			fiEqn.solve();
 			fvConstraints.constrain(f[dI]);
+			f[dI].correctBoundaryConditions();
 
 		} // end internal cycles loop
 
 	} // end loop over velocity set
 
-	// load macroscopic fields from particle distributions
+	// solve finally for the resting distribution
+	fvScalarMatrix f0Eqn
+	(
+			fvm::ddt(f[0])
+		==
+			fvc::Sp(omega, feq[0])
+		- fvc::Sp(omega, f[0])
+	);
+
+	f0Eqn.relax();
+	fvConstraints.constrain(f0Eqn);
+	f0Eqn.solve();
+	fvConstraints.constrain(f[0]);
+	f[0].correctBoundaryConditions();
+
+	// load particle distributions moments
 	rho *= 0.;
 	momentum *= 0.;
 	forAll(f, dI)
@@ -32,16 +46,5 @@
 		rho += f[dI];
 		momentum += c[dI]*f[dI];
 	}
-	U = momentum/rho;
-	p = pRef*dimPres + (rho-density)/ICS2;
 
-
-	// load equilibrium distributions from macroscopic fields
-	forAll(feq, dI)
-	{
-		feq[dI] = W[dI]*rho*( 1.0
-							+ ICS2*(c[dI]&U)
-							- 0.5*ICS2*(U&U)
-							+ 0.5*ICS4*(c[dI]&U)*(c[dI]&U)
-							);
-	}
+} // end of anonymous namespace

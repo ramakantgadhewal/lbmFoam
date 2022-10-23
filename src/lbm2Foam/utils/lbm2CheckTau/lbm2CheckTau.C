@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
     #include "createMesh.H"
 
     #include "createFields.H"
-    #include "createNeutronFields.H"
 
   	Info<< "End\n" << endl;
 

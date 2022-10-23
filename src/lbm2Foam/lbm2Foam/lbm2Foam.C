@@ -22,10 +22,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    lbm1Foam
+    lbm2Foam
 
 Description
-    test solver for 1D transport problems
+    test solver for 2D fluid transport problems
 
 \*---------------------------------------------------------------------------*/
 
@@ -38,49 +38,69 @@ Description
 
 int main(int argc, char *argv[])
 {
-    #include "setRootCase.H"
-    #include "createTime.H"
-    #include "createMesh.H"
-    #include "createControl.H"
+  #include "setRootCase.H"
+  #include "createTime.H"
+  #include "createMesh.H"
+  #include "createControl.H"
 
-    #include "createFields.H"
-    #include "createNeutronFields.H"
-    #include "createFvConstraints.H"
-    #include "createFvModels.H"
+  #include "createFields.H"
+  #include "createFvConstraints.H"
+  #include "createFvModels.H"
 
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+  // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-	  #include "initLBM.H"
+  // Initilize if user requires
+	if(initScheme)
+  {
+    #include "initLBM.H"
+  }
 
-    Info<< "\nTime loop\n" << endl;
+  Info<< "\nTime loop\n" << endl;
 
-  	while(runTime.run())
-  	{
-      runTime++;
+	while(runTime.run())
+	{
+    runTime++;
 
-      Info<< "Time = " << runTime.timeName() << nl << endl;
+    Info<< "Time = " << runTime.timeName() << nl << endl;
 
-  		while (pimple.loop())
-  		{
+		while (pimple.loop())
+		{
 
-  			// solve LB equations
-  			//#include "fEqn.H"
-        #include "fluxEqn.H"
+			// solve LB equations
+			#include "fEqn.H"
 
-  		}
-      
-      runTime.write();
+      // reconstruct macroscopic fileds
+      U = momentum/rho;
+      p = pRef*dimPres + (rho-density)/ICS2;
 
-  		Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-          << "    ClockTime = " << runTime.elapsedClockTime() << " s"
-          << nl << endl;
+      // load equilibrium distributions from macroscopic fields
+      forAll(feq, dI)
+      {
+        cDotU[dI] = (c[dI] & U);
+        uEqFactor[dI] = W[dI]*( 1.0
+                              + ICS2*cDotU[dI]*(1. + 0.5*ICS2*cDotU[dI])
+                              - 0.5*ICS2*(U&U)
+                              );
+        feq[dI] = rho*uEqFactor[dI];
+      }
 
-  	}
+		} // end of PIMPLE loop
 
-  	Info<< "End\n" << endl;
+    runTime.write();
 
-    return 0;
-}
+		Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+        << "    ClockTime = " << runTime.elapsedClockTime() << " s" << nl << nl
+        << "System mass = "
+        << (fvc::domainIntegrate(rho)).value() << " kg" << nl
+        << endl;
+
+	} // end of time loop
+
+	Info<< "End\n" << endl;
+
+
+  return 0;
+} // end of main
 
 
 // ************************************************************************* //

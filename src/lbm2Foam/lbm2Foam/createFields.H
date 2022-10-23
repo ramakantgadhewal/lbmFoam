@@ -1,68 +1,56 @@
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Create thermo-hydraulic fields
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
 
 	Info<< "Reading field U\n" << endl;
 
 	volVectorField U
 	(
-    IOobject
-    (
-        "U",
-        runTime.timeName(),
-        mesh,
-        IOobject::MUST_READ,
-        IOobject::AUTO_WRITE
-    ),
-    mesh
-	);
+        IOobject
+        (
+            "U",
+            runTime.timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
+    );
 	// exract max initial velocity
+	// to compute Mach number
 	scalar UMAX = max(mag(U)).value();
-	// create surface scalar field
-	surfaceScalarField phi
-	(
-		IOobject
-		(
-				"phi",
-				runTime.timeName(),
-				mesh,
-				IOobject::NO_READ,
-				IOobject::AUTO_WRITE
-		),
-		fvc::flux(U)
-	);
+
 
   Info<< "Reading transportProperties\n" << endl;
 
-  IOdictionary transportProperties
+  const IOdictionary transportProperties
   (
-      IOobject
-      (
-          "transportProperties",
-          runTime.constant(),
-          mesh,
-          IOobject::MUST_READ_IF_MODIFIED,
-          IOobject::NO_WRITE
-      )
+    IOobject
+    (
+      "transportProperties",
+      runTime.constant(),
+      mesh,
+      IOobject::MUST_READ_IF_MODIFIED,
+      IOobject::NO_WRITE
+    )
   );
 
 	// kinematic viscosity
-	const dimensionedScalar nu
+	dimensionedScalar nu
 	(
 		transportProperties.lookup("nu")
 	);
 
-	// ** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
   // Read LBM user options from controlDict
 
-	// read number of directions
-	const unsigned int dirNum =
-	runTime.controlDict().lookupOrDefault<scalar>("directions", 9);
+	// read initialization type
+	const bool initScheme =
+	runTime.controlDict().lookupOrDefault<bool>("initScheme", false);
 	// read space discretization parameter
 	const scalar deltaX =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaX", 1);
 	// read time discretization parameter
-	scalar deltaT =
+	const scalar deltaT =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaT", 1);
 	// read flow density
 	const scalar rho0 =
@@ -73,16 +61,13 @@
 	// read number of internal pimple loops
 	const unsigned int internal =
 	runTime.controlDict().lookupOrDefault<scalar>("internal", 1);
-	// read system temperature (isothermal model)
-	const scalar T0 =
-	runTime.controlDict().lookupOrDefault<scalar>("temperature", 900);
 
 
-	// ** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-  // Dimension sets
+
+	// Create dimension unities
 
 	// inverse time dimensions
-	const dimensionedScalar IdimTime
+	dimensionedScalar IdimTime
 	(
 		"IdimTime",
 		dimensionSet(0,0,-1,0,0,0,0),
@@ -90,7 +75,7 @@
 	);
 
 	// velocity dimensions
-	const dimensionedScalar dimVel
+	dimensionedScalar dimVel
 	(
 		"dimVel",
 		dimensionSet(0,1,-1,0,0,0,0),
@@ -98,7 +83,7 @@
 	);
 
 	// density dimensions
-	const dimensionedScalar dimRho
+	dimensionedScalar dimRho
 	(
 		"dimRho",
 		dimensionSet(1,-3,0,0,0,0,0),
@@ -106,53 +91,41 @@
 	);
 
 	// pressure dimensions
-	const dimensionedScalar dimPres
+	dimensionedScalar dimPres
 	(
 		"dimPres",
 		dimensionSet(1,-1,-2,0,0,0,0),
 		1
 	);
 
-	// Temperature dimensions
-	const dimensionedScalar dimTemp
-	(
-		"dimTemp",
-		dimensionSet(0,0,0,1,0,0,0),
-		1
-	);
-
-	// ** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-  Info<< "Creating LB fields\n" << endl;
-
-
-	PtrList<volScalarField>				f(dirNum);		// particle distribution
-	PtrList<volScalarField>				feq(dirNum);	// equilibrium distribution
-	PtrList<volVectorField> 			c(dirNum);		// lattice velocities
-	PtrList<surfaceScalarField>		xi(dirNum); 	// lattice velocities surface flux
 
 	// compute velocity set properties
-	#include "D2Q9.H"
+	#include "readVelocitySet.H"
 
-	// lattice velocity magnitude
-	dimensionedScalar cl("cl", dimVel*deltaX/deltaT);
-	// inverse of lattice speed of sound squared
-	dimensionedScalar ICS2
+  Info<< "Creating LBM fields\n" << endl;
+
+	PtrList<volScalarField>				f(dirNum);			// particle distribution
+	PtrList<volScalarField>				feq(dirNum);		// equilibrium distribution
+	PtrList<volVectorField> 			c(dirNum);			// lattice velocities
+	PtrList<volScalarField> 			cDotU(dirNum);  // scalar product between U end c
+	PtrList<volScalarField> uEqFactor(dirNum);  	// feq_i = (<-this) * sum_j[ f_j ]
+	PtrList<surfaceScalarField>		xi(dirNum); 		// lattice velocities surface flux
+
+
+	// directions velocity component magnitude
+	dimensionedScalar cl(dimVelocity, deltaX/deltaT);
+	// save inverse of speed of sound squared
+	const dimensionedScalar ICS2
 	(
 		"ICS2",
-		3/cl/cl
-	);
-	dimensionedScalar ICS4
-	(
-		"ICS4",
-		ICS2*ICS2
+		lICS2/cl/cl
 	);
 
 	Info<< "Squared Mach number = " << UMAX*UMAX*ICS2.value() << nl << endl;
 
 	// compute inverse of BGK relaxation time (omega=1/tau)
-	scalar tau((0.5 + 3*nu.value()/cl.value()/deltaX)*deltaT);
-	dimensionedScalar omega
+	const scalar tau((0.5 + lICS2*nu.value()/cl.value()/deltaX)*deltaT);
+	const dimensionedScalar omega
 	(
 		"omega",
 		IdimTime/tau
@@ -160,65 +133,65 @@
 
 	Info<< "BGK (lattice) relaxation time = " << tau/deltaT << nl << endl;
 
-	// particle mass density
-	/*
-		this is initialize as uniform but computed later
-	    according to the initial velocity field
+	/* Particle mass density
+		This is initialize as uniform but computed later
+	  according to the initial velocity field (if required)
 	*/
 	volScalarField rho
+  (
+    IOobject
     (
-        IOobject
-        (
-            "rho",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-				dimRho*rho0
-    );
-	// incompressible (constant) density field
+      "rho",
+      runTime.timeName(),
+      mesh,
+      IOobject::NO_READ,
+      IOobject::NO_WRITE
+    ),
+    mesh,
+		dimensionedScalar(dimDensity, rho0)
+  );
+	// incompressible density field
 	volScalarField density("density", rho);
 	volScalarField rho_prev("rho_prev", rho);
 	// ^ this is needed in simulation initializzation
 
-	// momentum field
-	volVectorField momentum(rho*U);
-
-	// pressure field
-	/*
-		this is related to the density field according to
+	/* Pressure field
+		This is related to the density field according to
 		the isothermal equation of state ( rho = ICS2*p )
 		Actually, since pressure gradients only matters,
 		the pressure field can be shifted as:
-						rho = rho0 + ICS2*(p - pRef)
+			rho = rho0 + ICS2*(p - pRef)
 	*/
 	volScalarField p
   (
     IOobject
     (
-        "p",
-        runTime.timeName(),
-        mesh,
-        IOobject::NO_READ,
-        IOobject::AUTO_WRITE
+      "p",
+      runTime.timeName(),
+      mesh,
+      IOobject::NO_READ,
+      IOobject::AUTO_WRITE
     ),
     mesh,
-		dimPres*pRef
+		dimensionedScalar(dimPres*pRef)
   );
 
+	// momentum field
+	volVectorField momentum("momentum", rho*U);
 
-	forAll(f, iSet)
+	// initializzation loop over velocity set
+	forAll(f, dI)
 	{
+
+		// Read particle distribution
 		f.set
 		(
-			iSet,
+			dI,
 			new volScalarField
 			(
 				IOobject
 				(
-					"f_"+Foam::name(iSet),
+					"f_"+Foam::name(dI),
 					runTime.timeName(),
 					mesh,
 					IOobject::MUST_READ,
@@ -228,45 +201,93 @@
 			)
 		);
 
-		feq.set
-		(
-			iSet,
-			new volScalarField
-			(
-				IOobject
-				(
-					"feq_"+Foam::name(iSet),
-					runTime.timeName(),
-					mesh,
-					IOobject::NO_READ,
-					IOobject::NO_WRITE
-				),
-				mesh,
-				0.*dimRho
-			)
-		);
-
+		// Assign velocity set
 		c.set
 		(
-			iSet,
+			dI,
 			new volVectorField
 			(
 				IOobject
 				(
-					"c_"+Foam::name(iSet),
+					"c_"+Foam::name(dI),
 					runTime.timeName(),
 					mesh,
 					IOobject::NO_READ,
 					IOobject::NO_WRITE
 				),
 				mesh,
-				cl*lattVect[iSet]
+				dimensionedVector(cl*lattVect[dI])
 			)
 		);
 
+		/* Save scalar product between lattice velocities
+		 	 and velocity field: cDotU = ci.U
+		*/
+		cDotU.set
+		(
+			dI,
+			new volScalarField
+			(
+				IOobject
+				(
+					"cDotU_"+Foam::name(dI),
+					runTime.timeName(),
+					mesh,
+					IOobject::NO_READ,
+					IOobject::NO_WRITE
+				),
+				(c[dI] & U)
+			)
+		);
+
+		/* Save initial equilibrium distribution factor:
+			The equilibrium distribution in each direction
+			is just proportional to the macroscopic density
+			field 		feq = uEqFactor * rho ,  where
+				uEqFactor =
+		wi (1+(ci.U)( 1 + 0.5(ci.U)/cs2)/cs2 - 0.5 U2/cs2 )
+		*/
+		uEqFactor.set
+		(
+			dI,
+			new volScalarField
+			(
+				IOobject
+				(
+					"uEf_"+Foam::name(dI),
+					runTime.timeName(),
+					mesh,
+					IOobject::NO_READ,
+					IOobject::NO_WRITE
+				),
+				W[dI]*( 1.0
+							+ ICS2*cDotU[dI]*(1. + 0.5*ICS2*cDotU[dI])
+							- 0.5*ICS2*(U&U))
+			)
+		);
+
+		// Assign equilibrium distribution values
+		feq.set
+		(
+			dI,
+			new volScalarField
+			(
+				IOobject
+				(
+					"feq_"+Foam::name(dI),
+					runTime.timeName(),
+					mesh,
+					IOobject::NO_READ,
+					IOobject::NO_WRITE
+				),
+				uEqFactor[dI]*rho
+			)
+		);
+
+		// Assign velocity set surface flux values
 		xi.set
 		(
-			iSet,
+			dI,
 			new surfaceScalarField
 			(
 				IOobject
@@ -277,38 +298,11 @@
 					IOobject::READ_IF_PRESENT,
 					IOobject::AUTO_WRITE
 				),
-				fvc::flux(c[iSet]) // this is usually employed for advection terms
+				fvc::flux(c[dI])
 			)
 		);
-	}
 
-// ** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+		// Initialize particle equilibrium distribution
+		f[dI] = feq[dI];
 
-	// temperature (constant) field
-	dimensionedScalar temperature("T", dimTemp*T0);
-
-	dimensionedScalar dimCv // [= [Cv]/dimTime]
-	(
-		"dimCv",
-		dimensionSet(1,2,-3,-1,0,0,0),
-		1
-	);
-
-	dimensionedScalar dimHex
-	(
-		"dimHex",
-		dimensionSet(1,2,-3,0,0,0,0),
-		1
-	);
-
-	dimensionedScalar heatCapacity
-	(
-		"Cv",
-		dimCv*runTime.controlDict().lookupOrDefault<scalar>("heatCapacity", 100)
-	);
-
-	dimensionedScalar hexRemoval
-	(
-		"hex",
-		dimHex*runTime.controlDict().lookupOrDefault<scalar>("hex", 7e2)
-	);
+	} // end of loop over velocity set
