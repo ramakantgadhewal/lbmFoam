@@ -10,7 +10,7 @@
 			  + fvm::div(xi[dI], f[dI])
 				==
 					fvc::Sp(omega, feq[dI])
-				- fvc::Sp(omega, f[dI])
+				- fvm::Sp(omega, f[dI])
 			);
 
 			fiEqn.relax();
@@ -29,7 +29,7 @@
 			fvm::ddt(f[0])
 		==
 			fvc::Sp(omega, feq[0])
-		- fvc::Sp(omega, f[0])
+		- fvm::Sp(omega, f[0])
 	);
 
 	f0Eqn.relax();

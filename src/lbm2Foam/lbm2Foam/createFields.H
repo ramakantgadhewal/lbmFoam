@@ -114,6 +114,13 @@
 
 	// directions velocity component magnitude
 	dimensionedScalar cl(dimVelocity, deltaX/deltaT);
+
+	// write computed magnitude in velocity set dictionary
+	dictionary& cCompDict = velocitySet.subDict("c");
+	cCompDict.set("value", cl.value());
+	velocitySet.regIOobject::write();
+	Info<<"here write vSet"<<endl;
+
 	// save inverse of speed of sound squared
 	const dimensionedScalar ICS2
 	(
@@ -262,10 +269,11 @@
 				),
 				W[dI]*( 1.0
 							+ ICS2*cDotU[dI]*(1. + 0.5*ICS2*cDotU[dI])
-							- 0.5*ICS2*(U&U))
+							- 0.5*ICS2*(U&U) )
 			)
 		);
-
+		Info<< dI << " - equilibrium factor 0 = "
+				<< average(uEqFactor[dI]).value() << endl;
 		// Assign equilibrium distribution values
 		feq.set
 		(

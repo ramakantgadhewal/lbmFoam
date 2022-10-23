@@ -47,6 +47,21 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
 {
   #include "computeEquilibriumFactor.H"
 
+  // determine direction
+  Field<scalar> relDir(patch().nf()&ci);
+  forAll(relDir, fI)
+  {
+    if(relDir[fI] > 0)
+    {
+      relDir[fI] = 0.;
+    }
+    else
+    {
+      relDir[fI] = 1.;
+    }
+  }
+  orientation_ = relDir;
+
 }
 
 
@@ -62,11 +77,30 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
     dI_(dict.lookup<Foam::label>("index")),
     rhoName_(dict.lookupOrDefault<word>("moment-0","rho"))
 {
-
   #include "computeEquilibriumFactor.H"
 
+  // determine direction
+  Field<scalar> relDir(patch().nf()&ci);
+  forAll(relDir, fI)
+  {
+    if(relDir[fI] > 0)
+    {
+      relDir[fI] = 0.;
+    }
+    else
+    {
+      relDir[fI] = 1.;
+    }
+  }
+  orientation_ = relDir;
+
+  // set field names
   feqName_  = "feq_"+Foam::name(dI_);
   fName_    = "f_"+Foam::name(dI_);
+
+  Info<<"Equilibrium factor = " << uwEqFactorI_
+      << " - uW = " << uW_
+      << " - index: " << dI_ << endl;
 }
 
 
@@ -84,6 +118,7 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
     rhoName_(ptf.rhoName_),
     feqName_(ptf.feqName_),
     fName_(ptf.fName_),
+    orientation_(ptf.orientation_),
     uwEqFactorI_(ptf.uwEqFactorI_)
 {}
 
@@ -100,6 +135,7 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
     rhoName_(tppsf.rhoName_),
     feqName_(tppsf.feqName_),
     fName_(tppsf.fName_),
+    orientation_(tppsf.orientation_),
     uwEqFactorI_(tppsf.uwEqFactorI_)
 {}
 
@@ -147,10 +183,12 @@ void Foam::lbmWallFvPatchScalarField::updateCoeffs()
     // set the boundary value
   	operator==
     (
-      fieqB + (fieqC-fiC)
+      //orientation_*( fieqB + (fieqC-fiC) )
+      fieqB
     );
 
     fixedValueFvPatchScalarField::updateCoeffs();
+    Info<<"Update coeff entered - index: " << dI_ << endl;
 }
 
 

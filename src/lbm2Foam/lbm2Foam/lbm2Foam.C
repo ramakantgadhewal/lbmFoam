@@ -69,22 +69,22 @@ int main(int argc, char *argv[])
 			// solve LB equations
 			#include "fEqn.H"
 
-      // reconstruct macroscopic fileds
-      U = momentum/rho;
-      p = pRef*dimPres + (rho-density)/ICS2;
-
-      // load equilibrium distributions from macroscopic fields
-      forAll(feq, dI)
-      {
-        cDotU[dI] = (c[dI] & U);
-        uEqFactor[dI] = W[dI]*( 1.0
-                              + ICS2*cDotU[dI]*(1. + 0.5*ICS2*cDotU[dI])
-                              - 0.5*ICS2*(U&U)
-                              );
-        feq[dI] = rho*uEqFactor[dI];
-      }
-
 		} // end of PIMPLE loop
+
+    // reconstruct macroscopic fileds
+    U = momentum/rho;
+    p = pRef*dimPres + (rho-density)/ICS2;
+
+    // load equilibrium distributions from macroscopic fields
+    forAll(feq, dI)
+    {
+      cDotU[dI] = (c[dI] & U);
+      uEqFactor[dI] = W[dI]*( 1.0
+                            + ICS2*cDotU[dI]*(1. + 0.5*ICS2*cDotU[dI])
+                            - 0.5*ICS2*(U&U)
+                            );
+      feq[dI] = rho*uEqFactor[dI];
+    }
 
     runTime.write();
 

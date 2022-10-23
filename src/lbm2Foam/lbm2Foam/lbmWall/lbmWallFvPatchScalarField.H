@@ -68,8 +68,12 @@ class lbmWallFvPatchScalarField
     word feqName_;
     word fName_;
 
+    // tell if distribution component is exiting the wall
+    Field<scalar> orientation_;
+
     // velocity set data (written by the default constructor)
     scalar  uwEqFactorI_;
+
 
 public:
 

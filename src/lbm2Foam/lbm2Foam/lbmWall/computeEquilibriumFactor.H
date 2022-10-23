@@ -1,38 +1,10 @@
 
-  // read velocity set data dictionary
+  // 0. read velocity set data dictionary
   const dictionary& velocitySet =
   db().lookupObject<IOdictionary>
   (
     "velocitySetData"
   );
-
-  const dictionary& controlDict =
-    velocitySet.parent().parent();
-
-  // 0. Read discretization parameters
-
-  // read data dictionary
-
-/*
-  const dictionary& controlDict =
-  db().lookupObject<IOdictionary>
-  (
-    "controlDict"
-  );
-*/
-
-  // read space discretization parameter
-  const scalar deltaX
-  (
-    controlDict.lookupOrDefault<scalar>("deltaX", 1)
-  );
-
-  // read time discretization parameter
-  const scalar deltaT
-  (
-    controlDict.lookupOrDefault<scalar>("deltaT", 1)
-  );
-
 
   // 1. Read velocity set data
 
@@ -48,11 +20,17 @@
     velocitySet.lookup<scalar>("MCD")
   );
 
+  // velocity component magnitude
+  const scalar cl
+  (
+    velocitySet.subDict("c").lookup<scalar>("value")
+  );
+
 
   // 2. Compute lattice parameters
 
   // speed of sound
-  const scalar ics2(lICS2*deltaT*deltaT/deltaX/deltaX);
+  const scalar ics2(lICS2/cl/cl);
 
   // lattice velocity weigth
   const scalar wi
@@ -69,7 +47,7 @@
     velocitySet.lookup<vector>
     (
       "lattVect_"+Foam::name(dI_)
-    )*deltaX/deltaT
+    )*cl
   );
 
 
