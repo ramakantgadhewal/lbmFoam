@@ -33,6 +33,7 @@ Description
 #include "fvModels.H"
 #include "fvConstraints.H"
 #include "pimpleControl.H"
+#include "localEulerDdtScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
   #include "createTime.H"
   #include "createMesh.H"
   #include "createControl.H"
+  #include "createRDeltaT.H"
 
   #include "createFields.H"
   #include "createFvConstraints.H"
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
     U = momentum/rho;
     p = pRef*dimPres + (rho-density)/ICS2;
 
-    // load equilibrium distributions from macroscopic fields
+    // load equilibrium distribution factor from macroscopic fields
     forAll(feq, dI)
     {
       cDotU[dI] = (c[dI] & U);

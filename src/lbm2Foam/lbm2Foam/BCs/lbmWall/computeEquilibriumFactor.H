@@ -6,6 +6,11 @@
     "velocitySetData"
   );
 
+  // save inversed index
+  const label& inI =
+    velocitySet.subDict("inKey").lookup<label>(name(dI_));
+
+
   // 1. Read velocity set data
 
   // inverse of squared lattice speed of sound
@@ -37,7 +42,7 @@
   (
     velocitySet.lookup<scalar>
     (
-      "wNum_"+Foam::name(dI_)
+      "wNum_"+Foam::name(inI)
     )/wMCD
   );
 
@@ -46,16 +51,16 @@
   (
     velocitySet.lookup<vector>
     (
-      "lattVect_"+Foam::name(dI_)
+      "lattVect_"+Foam::name(inI)
     )*cl
   );
 
 
   // 3. evaluate equilibrium wall velocity factor
-  const scalar xi(ics2*(ci & uW_));
+  const scalar cDotUBycs2(ics2*(ci & uW_));
   uwEqFactorI_ = wi*
                   (
                     1.
-                  + xi*(1+0.5*xi)
+                  + cDotUBycs2*(1+0.5*cDotUBycs2)
                   - 0.5*ics2*(uW_ & uW_)
                   );

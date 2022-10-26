@@ -96,11 +96,8 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
 
   // set field names
   feqName_  = "feq_"+Foam::name(dI_);
-  fName_    = "f_"+Foam::name(dI_);
+  fName_    = "f_"+Foam::name(inI);
 
-  Info<<"Equilibrium factor = " << uwEqFactorI_
-      << " - uW = " << uW_
-      << " - index: " << dI_ << endl;
 }
 
 
@@ -153,6 +150,13 @@ void Foam::lbmWallFvPatchScalarField::updateCoeffs()
     // access the owner internal field
     const tmp<Field<scalar>>& fiC = patchInternalField();
 
+    // inverse distribution
+    const tmp<Field<scalar>>& infiC =
+      patch().lookupPatchField<volScalarField, scalar>
+      (
+        fName_
+      ).patchInternalField();
+
     // extract internal field next to the current patch
 
     // equilibrium distribution
@@ -175,8 +179,8 @@ void Foam::lbmWallFvPatchScalarField::updateCoeffs()
     // set the boundary value
   	operator==
     (
-      //orientation_*( fieqB + (fieqC-fiC) )
-      static_cast<Field<scalar>>(fieqB)//+ (fieqC-fiC))
+      //fieqB
+      orientation_*(fieqB + (fiC-fieqC)) + (1.-orientation_)*infiC
     );
 
     fixedValueFvPatchScalarField::updateCoeffs();

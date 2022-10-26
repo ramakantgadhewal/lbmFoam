@@ -1,4 +1,4 @@
 lbm2Foam.C
-lbmWall/lbmWallFvPatchScalarField.C
+BCs/lbmWall/lbmWallFvPatchScalarField.C
 
 EXE = $(FOAM_USER_APPBIN)/lbm2Foam

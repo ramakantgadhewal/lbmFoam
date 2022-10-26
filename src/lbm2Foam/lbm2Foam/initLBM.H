@@ -4,10 +4,10 @@
 		runTime.controlDict().lookupOrDefault<scalar>("initTol", 1e-12);
 
 	const unsigned int iterICmax =
-		runTime.controlDict().lookupOrDefault<scalar>("initIterMax", 1e6);
+		runTime.controlDict().lookupOrDefault<scalar>("initIterMax", 1e3);
 
 	const unsigned int iterICerrEval =
-		runTime.controlDict().lookupOrDefault<scalar>("initErrEval", 1e2);
+		runTime.controlDict().lookupOrDefault<scalar>("initErrEval", 1e1);
 
 	Info<< "\nInitialize simulation\n" << endl;
 

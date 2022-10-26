@@ -8,9 +8,11 @@
 			(
 					fvm::ddt(f[dI])
 				+ fvm::div(xi[dI], f[dI])
+				+ omega*fvm::Sp(1.-uEqFactor[dI], f[dI])
 				==
-					fvc::Sp(omega, feq[dI])
-				- fvm::Sp(omega, f[dI])
+					omega*fvc::Sp(1.-uEqFactor[dI], f[dI])
+				- fvc::Sp(omega, f[dI])
+				+	fvc::Sp(omega, feq[dI])
 			);
 
 			fiEqn.relax();
@@ -26,10 +28,12 @@
 	// solve finally for the resting distribution
 	fvScalarMatrix f0Eqn
 	(
-			fvm::ddt(f[0])
-		==
-			fvc::Sp(omega, feq[0])
-		- fvm::Sp(omega, f[0])
+				fvm::ddt(f[0])
+			+ omega*fvm::Sp(1.-uEqFactor[0], f[0])
+			==
+				omega*fvc::Sp(1.-uEqFactor[0], f[0])
+			- fvc::Sp(omega, f[0])
+			+	fvc::Sp(omega, feq[0])
 	);
 
 	f0Eqn.relax();
@@ -45,6 +49,12 @@
 	{
 		rho += f[dI];
 		momentum += c[dI]*f[dI];
+	}
+
+	// load equilibrium distributions
+	forAll(feq, dI)
+	{
+		feq[dI] = uEqFactor[dI]*rho;
 	}
 
 } // end of anonymous namespace
