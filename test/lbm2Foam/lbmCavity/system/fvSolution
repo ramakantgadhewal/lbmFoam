@@ -19,8 +19,9 @@ solvers
 {
     "f.*"
     {
-        solver           GAMG;
-        smoother         DILU;
+        solver           PBiCG;
+        preconditioner   DILU;
+        smoother         DIC;
 
         tolerance       1e-15;
         relTol          1e-3;
@@ -30,8 +31,9 @@ solvers
 	"(f.*)Final"
 	{
 		$("f.*");
-    solver           GAMG;
-    smoother         DILU;
+    solver           PBiCG;
+    preconditioner   DILU
+    smoother         DIC;
 
     tolerance       1e-15;
     relTol          1e-3;
@@ -43,7 +45,7 @@ solvers
 PIMPLE
 {
     nNonOrthogonalCorrectors 0;
-    nCorrectors         2;
+    nCorrectors         3;
 }
 
 

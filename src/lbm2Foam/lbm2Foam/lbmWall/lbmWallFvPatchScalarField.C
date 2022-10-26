@@ -151,39 +151,35 @@ void Foam::lbmWallFvPatchScalarField::updateCoeffs()
     }
 
     // access the owner internal field
-    const Field<scalar>& fiC = patchInternalField();
-    Info << "fiC = " << fiC << endl;
+    const tmp<Field<scalar>>& fiC = patchInternalField();
 
     // extract internal field next to the current patch
 
     // equilibrium distribution
-    const Field<scalar>& fieqC =
+    const tmp<Field<scalar>>& fieqC =
       patch().lookupPatchField<volScalarField, scalar>
       (
         feqName_
       ).patchInternalField();
 
     // particle density
-    const Field<scalar>& rhoC =
+    const tmp<Field<scalar>>& rhoC =
       this->patch().lookupPatchField<volScalarField, scalar>
       (
         rhoName_
       ).patchInternalField();
 
-    Info << "rhoC = " << rhoC <<endl;
     // equilibrium distribution at the boundary
-    const Field<scalar>& fieqB = uwEqFactorI_*rhoC;
-    Info << "fieqB = " << fieqB << endl;
+    const tmp<Field<scalar>>& fieqB = uwEqFactorI_*rhoC;
 
     // set the boundary value
   	operator==
     (
       //orientation_*( fieqB + (fieqC-fiC) )
-      fieqB
+      static_cast<Field<scalar>>(fieqB)//+ (fieqC-fiC))
     );
 
     fixedValueFvPatchScalarField::updateCoeffs();
-    Info<<"Update coeff completed - index: " << dI_ << endl;
 }
 
 

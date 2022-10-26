@@ -21,19 +21,12 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    topWall
+    movingWall
     {
-        type            empty;
+        type            fixedValue;
+	value		uniform (1 0 0);
     }
-    bottomWall
-    {
-        type            empty;
-    }
-    rightWall
-    {
-        type            noSlip;
-    }
-    leftWall
+    boundaryWall
     {
         type            noSlip;
     }

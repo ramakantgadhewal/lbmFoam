@@ -23,7 +23,7 @@ $(MESHLOG): $(LOG_DIR)
 	blockMesh > $(MESHLOG)
 
 $(SIMLOG): $(MESHLOG)
-	lbm1Foam > $(SIMLOG)
+	lbm2Foam > $(SIMLOG)
 
 $(OUTLOG): $(SIMLOG)
 	foamToVTK > $(OUTLOG)
