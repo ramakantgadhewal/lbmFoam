@@ -46,7 +46,14 @@ PIMPLE
 {
     nNonOrthogonalCorrectors 0;
     nCorrectors         3;
+
+    residualControl
+    {
+      "f.*"             1e-5;
+    }
 }
+
+
 
 
 // ************************************************************************* //

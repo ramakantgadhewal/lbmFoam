@@ -23,7 +23,7 @@ startTime       	0;
 
 stopAt          	endTime;
 
-endTime         	5;
+endTime         	15;
 
 deltaX				    0.01;
 
@@ -52,6 +52,8 @@ pressure			    1e5; // [Pa]
 //internal			    2;
 
 initScheme        true;
+
+BGKtau            1.2;
 
 
 // ************************************************************************* //
