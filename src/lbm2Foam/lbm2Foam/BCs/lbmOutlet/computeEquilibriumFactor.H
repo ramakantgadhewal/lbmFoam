@@ -25,12 +25,13 @@
   );
 
   // 1. Read velocity patch data
-  const tmp<Field<vector>>& UW =
-    patch().lookupPatchField<volVectorField, vector>("U");
-
-  const vector& uW = average(static_cast<Field<vector>>(UW));
-  // !! ^^ This assumes a single velocity assigned
-  // TODO: needs a check
+  const Field<vector>& UC = static_cast<Field<vector>>
+  (
+    patch().lookupPatchField<volVectorField, vector>
+    (
+      "U"
+    ).patchInternalField()
+  );
 
   // 2. Compute lattice parameters
 
@@ -57,10 +58,10 @@
 
 
   // 3. save wall equilibrium velocity factor
-  const scalar& cDotUwBycs2(ics2*(ci & uW));
-  uInEqFactorI_ = wi*
+  const Field<scalar>& cDotUwBycs2(ics2*(ci & UC));
+  uCEqFactorI_ = wi*
                   (
                     1.
                   + cDotUwBycs2*(1+0.5*cDotUwBycs2)
-                  - 0.5*ics2*(uW & uW)
+                  - 0.5*ics2*(UC & UC)
                   );

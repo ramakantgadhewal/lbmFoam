@@ -9,7 +9,7 @@
 	const unsigned int iterICerrEval =
 		runTime.controlDict().lookupOrDefault<scalar>("initErrEval", 1e1);
 
-	Info<< "\nInitialize simulation\n" << endl;
+	Info<< "\nInitialize simulation through lbm iterations\n" << endl;
 
 	// start function objects
 	runTime.functionObjects().start();
@@ -60,6 +60,7 @@
 
 	// evaluate initial pressure distribution
 	p = pRef*dimPres + (rho-density)/ICS2;
+
 
 	// write IO objects
 	forAll(f, dI)

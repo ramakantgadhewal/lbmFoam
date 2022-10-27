@@ -1,8 +1,8 @@
 {// BGK Lattice Boltzman equation discretization
 
-	for(unsigned int dI=1; dI<dirNum; dI++)
+	for(label ic=0; ic<internal; ++ic)
 	{
-		for(unsigned int ic=0; ic<internal; ++ic)
+		for(label dI=1; dI<dirNum; dI++)
 		{
 			fvScalarMatrix fiEqn
 			(
@@ -19,11 +19,13 @@
 			fvConstraints.constrain(fiEqn);
 			fiEqn.solve();
 			fvConstraints.constrain(f[dI]);
-			//f[dI].correctBoundaryConditions();
 
-		} // end internal cycles loop
+			//load distribution gradient
+			gradf[dI] = fvc::grad(f[dI]);
 
-	} // end loop over velocity set
+		} // end loop over velocity set
+
+	} // end internal cycles loop
 
 	// solve finally for the resting distribution
 	fvScalarMatrix f0Eqn
@@ -40,7 +42,9 @@
 	fvConstraints.constrain(f0Eqn);
 	f0Eqn.solve();
 	fvConstraints.constrain(f[0]);
-	//f[0].correctBoundaryConditions();
+
+	// load distribution gradient
+	gradf[0] = fvc::grad(f[0]);
 
 	// load particle distributions moments
 	rho *= 0.;
@@ -51,7 +55,10 @@
 		momentum += c[dI]*f[dI];
 	}
 
-	// load equilibrium distributions
+	/* load equilibrium distributions:
+		explicit treatment of the velocity field
+		-> uEqFactor taken from the prevoius time step
+	*/
 	forAll(feq, dI)
 	{
 		feq[dI] = uEqFactor[dI]*rho;

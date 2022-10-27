@@ -1,6 +1,4 @@
 
-
-
 	Info<< "Reading field U\n" << endl;
 
 	volVectorField U
@@ -34,33 +32,35 @@
     )
   );
 
-	// kinematic viscosity
+	// Kinematic viscosity
 	dimensionedScalar nu
 	(
 		transportProperties.lookup("nu")
 	);
 
+// * * * * * * * * * * * * * * * * * LBM fields * * * * * * * * * * * * * * * /
 
-  // Read LBM user options from controlDict
-
-	// read initialization type
+	// - read initialization type
 	const bool initScheme =
 	runTime.controlDict().lookupOrDefault<bool>("initScheme", false);
-	// read space discretization parameter
+	// - read space discretization parameter
 	const scalar deltaX =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaX", 1);
-	// read time discretization parameter
+	// - read time discretization parameter
 	const scalar deltaT =
 	runTime.controlDict().lookupOrDefault<scalar>("deltaT", 1);
-	// read flow density
+	// - read flow density
 	const scalar rho0 =
 	runTime.controlDict().lookupOrDefault<scalar>("density", 1000);
-	// read reference pressure
+	// - read reference pressure
 	const scalar pRef =
 	runTime.controlDict().lookupOrDefault<scalar>("pressure", 1.01e5);
-	// read number of internal pimple loops
-	const unsigned int internal =
+	// - read number of internal pimple loops
+	const label internal =
 	runTime.controlDict().lookupOrDefault<scalar>("internal", 1);
+	// BGK relaxation time option
+	scalar tau =
+	runTime.controlDict().lookupOrDefault<scalar>("BGKtau", 0);
 
 
 
@@ -99,7 +99,7 @@
 	);
 
 
-	// compute velocity set properties
+	// Compute velocity set properties
 	#include "readVelocitySet.H"
 
   Info<< "Creating LBM fields\n" << endl;
@@ -107,21 +107,21 @@
 	PtrList<volScalarField>				f(dirNum);			// particle distribution
 	PtrList<volScalarField>				feq(dirNum);		// equilibrium distribution
 	PtrList<volVectorField> 			c(dirNum);			// lattice velocities
-	PtrList<volScalarField> 			cDotU(dirNum);  // scalar product between U end c
+	PtrList<volScalarField> cDotUBycs2(dirNum);  	// scalar product between U end c
 	PtrList<volScalarField> uEqFactor(dirNum);  	// feq_i = (<-this) * sum_j[ f_j ]
 	PtrList<surfaceScalarField>		xi(dirNum); 		// lattice velocities surface flux
+	PtrList<volVectorField> 		gradf(dirNum);  	// needed for inlet&outlet BCs
 
 
-	// directions velocity component magnitude
+	// Directions velocity component magnitude
 	dimensionedScalar cl(dimVelocity, deltaX/deltaT);
 
-	// write computed magnitude in velocity set dictionary
+	// Write computed magnitude in velocity set dictionary
 	dictionary& cCompDict = velocitySet.subDict("c");
 	cCompDict.set("value", cl.value());
 	velocitySet.regIOobject::write();
-	Info<<"here write vSet"<<endl;
 
-	// save inverse of speed of sound squared
+	// Save inverse of speed of sound squared
 	const dimensionedScalar ICS2
 	(
 		"ICS2",
@@ -130,15 +130,18 @@
 
 	Info<< "Squared Mach number = " << UMAX*UMAX*ICS2.value() << nl << endl;
 
-	// compute inverse of BGK relaxation time (omega=1/tau)
-	const scalar tau((0.5 + lICS2*nu.value()/cl.value()/deltaX)*deltaT);
+	// Compute inverse of BGK relaxation time (omega=1/tau)
+	if(tau==0)
+	{
+		tau = (0.5 + lICS2*nu.value()/cl.value()/deltaX);
+	}
 	const dimensionedScalar omega
 	(
 		"omega",
-		IdimTime/tau
+		IdimTime/tau/deltaT
 	);
 
-	Info<< "BGK (lattice) relaxation time = " << tau/deltaT << nl << endl;
+	Info<< "BGK (lattice) relaxation time = " << tau << nl << endl;
 
 	/* Particle mass density
 		This is initialize as uniform but computed later
@@ -157,7 +160,7 @@
     mesh,
 		dimensionedScalar(dimDensity, rho0)
   );
-	// incompressible density field
+	// Incompressible density field
 	volScalarField density("density", rho);
 	volScalarField rho_prev("rho_prev", rho);
 	// ^ this is needed in simulation initializzation
@@ -180,13 +183,13 @@
       IOobject::AUTO_WRITE
     ),
     mesh,
-		dimensionedScalar(dimPres*pRef)
+		dimensionedScalar(dimPressure, pRef)
   );
 
-	// momentum field
+	// Momentum field
 	volVectorField momentum("momentum", rho*U);
 
-	// initializzation loop over velocity set
+	// Initializzation loop over velocity set
 	forAll(f, dI)
 	{
 
@@ -223,14 +226,14 @@
 					IOobject::NO_WRITE
 				),
 				mesh,
-				dimensionedVector(cl*lattVect[dI])
+				cl*lattVect[dI]
 			)
 		);
 
 		/* Save scalar product between lattice velocities
 		 	 and velocity field: cDotU = ci.U
 		*/
-		cDotU.set
+		cDotUBycs2.set
 		(
 			dI,
 			new volScalarField
@@ -243,7 +246,7 @@
 					IOobject::NO_READ,
 					IOobject::NO_WRITE
 				),
-				(c[dI] & U)
+				ICS2*(c[dI] & U)
 			)
 		);
 
@@ -268,12 +271,11 @@
 					IOobject::NO_WRITE
 				),
 				W[dI]*( 1.0
-							+ ICS2*cDotU[dI]*(1. + 0.5*ICS2*cDotU[dI])
+							+ cDotUBycs2[dI]*(1. + 0.5*cDotUBycs2[dI])
 							- 0.5*ICS2*(U&U) )
 			)
 		);
-		Info<< dI << " - equilibrium factor 0 = "
-				<< average(uEqFactor[dI]).value() << endl;
+
 		// Assign equilibrium distribution values
 		feq.set
 		(
@@ -313,4 +315,20 @@
 		// Initialize particle equilibrium distribution
 		f[dI] = feq[dI];
 
+		gradf.set
+		(
+			dI,
+			new volVectorField
+			(
+				IOobject
+				(
+					"gradf_"+Foam::name(dI),
+					runTime.timeName(),
+					mesh,
+					IOobject::NO_READ,
+					IOobject::NO_WRITE
+				),
+				fvc::grad(f[dI])
+			)
+		);
 	} // end of loop over velocity set

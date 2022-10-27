@@ -4,7 +4,7 @@
    \\    /   O peration     | Website:  https://openfoam.org
     \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
--------------------------------------------------------------------------------
+-----------------------------------------7--------------------------------------
 License
     This file is part of OpenFOAM.
 
@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::lbmInletFvPatchScalarField
+    Foam::lbmOutletFvPatchScalarField
 
 Description
     Boundary condition which switches between maximum and minimum specified
@@ -30,15 +30,15 @@ Description
     user.
 
 SourceFiles
-    lbmInletFvPatchScalarField.C
+    lbmOutletFvPatchScalarField.C
 
 See also
     Foam::fixedValueFvPatchField
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef lbmInletFvPatchScalarField_H
-#define lbmInletFvPatchScalarField_H
+#ifndef lbmOutletFvPatchScalarField_H
+#define lbmOutletFvPatchScalarField_H
 
 #include "fixedValueFvPatchFields.H"
 
@@ -48,10 +48,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-             Class lbmInletFvPatchScalarField Declaration
+             Class lbmOutletFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
-class lbmInletFvPatchScalarField
+class lbmOutletFvPatchScalarField
 :
     public fixedValueFvPatchScalarField
 {
@@ -67,7 +67,10 @@ class lbmInletFvPatchScalarField
     Field<scalar> orientation_;
 
     // velocity set data (written by the default constructor)
-    scalar  uInEqFactorI_;
+    Field<scalar>  uCEqFactorI_;
+
+    // outlet pressure
+    Field<scalar> rhoOut_;
 
 
 public:
@@ -79,40 +82,40 @@ public:
     // Constructors
 
         //- Construct from patch and internal field
-        lbmInletFvPatchScalarField
+        lbmOutletFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        lbmInletFvPatchScalarField
+        lbmOutletFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const dictionary&
         );
 
-        //- Construct by mapping given lbmInletFvPatchScalarField
+        //- Construct by mapping given lbmOutletFvPatchScalarField
         //  onto a new patch
-        lbmInletFvPatchScalarField
+        lbmOutletFvPatchScalarField
         (
-            const lbmInletFvPatchScalarField&,
+            const lbmOutletFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Disallow copy without setting internal field reference
-        lbmInletFvPatchScalarField
+        lbmOutletFvPatchScalarField
         (
-            const lbmInletFvPatchScalarField&
+            const lbmOutletFvPatchScalarField&
         ) = delete;
 
         //- Copy constructor setting internal field reference
-        lbmInletFvPatchScalarField
+        lbmOutletFvPatchScalarField
         (
-            const lbmInletFvPatchScalarField&,
+            const lbmOutletFvPatchScalarField&,
             const DimensionedField<scalar, volMesh>&
         );
 
@@ -124,7 +127,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new lbmInletFvPatchScalarField(*this, iF)
+                new lbmOutletFvPatchScalarField(*this, iF)
             );
         }
 

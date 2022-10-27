@@ -25,7 +25,7 @@
 	);
 
   // directions number
-	const unsigned int dirNum
+	const label dirNum
 	(
 		velocitySet.lookup<int>("dirNum")
 	);
@@ -61,5 +61,5 @@
 		);
 	}
 
-	Info<< " Number of directions = "
-		  << dirNum << nl << endl;
+	Info<< " Number of directions = "<< dirNum << nl
+      << endl;

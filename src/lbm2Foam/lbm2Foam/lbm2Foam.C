@@ -25,7 +25,8 @@ Application
     lbm2Foam
 
 Description
-    test solver for 2D fluid transport problems
+    test solver for 2D fluid transport problems employng lattice Boltzman
+    equation
 
 \*---------------------------------------------------------------------------*/
 
@@ -56,6 +57,12 @@ int main(int argc, char *argv[])
   {
     #include "initLBM.H"
   }
+  else
+  {
+    Info
+    << "Simulation initialized to equilibrium distribution.\n"
+    << endl;
+  }
 
   Info<< "\nTime loop\n" << endl;
 
@@ -80,9 +87,9 @@ int main(int argc, char *argv[])
     // load equilibrium distribution factor from macroscopic fields
     forAll(feq, dI)
     {
-      cDotU[dI] = (c[dI] & U);
+      cDotUBycs2[dI] = ICS2*(c[dI] & U);
       uEqFactor[dI] = W[dI]*( 1.0
-                            + ICS2*cDotU[dI]*(1. + 0.5*ICS2*cDotU[dI])
+                            + cDotUBycs2[dI]*(1. + 0.5*cDotUBycs2[dI])
                             - 0.5*ICS2*(U&U)
                             );
       feq[dI] = rho*uEqFactor[dI];
@@ -98,7 +105,7 @@ int main(int argc, char *argv[])
 
 	} // end of time loop
 
-	Info<< "End\n" << endl;
+	Info<< "End.\n" << endl;
 
 
   return 0;

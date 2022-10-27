@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "lbmInletFvPatchScalarField.H"
+#include "lbmOutletFvPatchScalarField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
@@ -31,7 +31,7 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
+Foam::lbmOutletFvPatchScalarField::lbmOutletFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
@@ -59,10 +59,17 @@ Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
   }
   orientation_ = relDir;
 
+  // extract outlet pressure
+  rhoOut_ = static_cast<Field<scalar>>
+  (
+    patch().lookupPatchField<volScalarField, scalar>(rhoName_)
+  );
+
+
 }
 
 
-Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
+Foam::lbmOutletFvPatchScalarField::lbmOutletFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -90,12 +97,19 @@ Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
   }
   orientation_ = relDir;
 
+  // extract outlet pressure
+  rhoOut_ = static_cast<Field<scalar>>
+  (
+    patch().lookupPatchField<volScalarField, scalar>(rhoName_)
+  );
+
+
 }
 
 
-Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
+Foam::lbmOutletFvPatchScalarField::lbmOutletFvPatchScalarField
 (
-    const lbmInletFvPatchScalarField& ptf,
+    const lbmOutletFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const fvPatchFieldMapper& mapper
@@ -105,13 +119,14 @@ Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
     dI_(ptf.dI_),
     rhoName_(ptf.rhoName_),
     orientation_(ptf.orientation_),
-    uInEqFactorI_(ptf.uInEqFactorI_)
+    uCEqFactorI_(ptf.uCEqFactorI_),
+    rhoOut_(ptf.rhoOut_)
 {}
 
 
-Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
+Foam::lbmOutletFvPatchScalarField::lbmOutletFvPatchScalarField
 (
-    const lbmInletFvPatchScalarField& tppsf,
+    const lbmOutletFvPatchScalarField& tppsf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
@@ -119,14 +134,15 @@ Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
     dI_(tppsf.dI_),
     rhoName_(tppsf.rhoName_),
     orientation_(tppsf.orientation_),
-    uInEqFactorI_(tppsf.uInEqFactorI_)
+    uCEqFactorI_(tppsf.uCEqFactorI_),
+    rhoOut_(tppsf.rhoOut_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
-void Foam::lbmInletFvPatchScalarField::updateCoeffs()
+void Foam::lbmOutletFvPatchScalarField::updateCoeffs()
 {
     if (updated())
     {
@@ -151,13 +167,6 @@ void Foam::lbmInletFvPatchScalarField::updateCoeffs()
       "feq_"+name(dI_)
     ).patchInternalField();
 
-    // density
-    const tmp<Field<scalar>>&
-    rhoC = patch().lookupPatchField<volScalarField, scalar>
-    (
-      "rhoName_"
-    ).patchInternalField();
-
     // extrapolate if unkown distribution
     const tmp<Field<scalar>>&
     dfiC = gradfiC & (patch().Cf() - patch().Cn());
@@ -166,14 +175,14 @@ void Foam::lbmInletFvPatchScalarField::updateCoeffs()
     (
         fiC
       + orientation_*dfiC
-      + (1-orientation_)*(uInEqFactorI_*rhoC - fieqC)
+      + (1-orientation_)*(uCEqFactorI_*rhoOut_ - fieqC)
     );
 
     fixedValueFvPatchScalarField::updateCoeffs();
 }
 
 
-void Foam::lbmInletFvPatchScalarField::write(Ostream& os) const
+void Foam::lbmOutletFvPatchScalarField::write(Ostream& os) const
 {
     fvPatchScalarField::write(os);
 
@@ -191,7 +200,7 @@ namespace Foam
     makePatchTypeField
     (
         fvPatchScalarField,
-        lbmInletFvPatchScalarField
+        lbmOutletFvPatchScalarField
     );
 
 }
