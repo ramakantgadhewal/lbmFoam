@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "lbmWallFvPatchScalarField.H"
+#include "lbmInletFvPatchScalarField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
@@ -31,7 +31,7 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
+Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
@@ -39,7 +39,6 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
 :
     fixedValueFvPatchScalarField(p, iF),
     dI_(Foam::label(0)),
-    idI_(Foam::label(0)),
     rhoName_("rho")
 
 {
@@ -63,7 +62,7 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
 }
 
 
-Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
+Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -94,9 +93,9 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
 }
 
 
-Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
+Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
 (
-    const lbmWallFvPatchScalarField& ptf,
+    const lbmInletFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const fvPatchFieldMapper& mapper
@@ -104,32 +103,30 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
     dI_(ptf.dI_),
-    idI_(ptf.idI_),
     rhoName_(ptf.rhoName_),
     orientation_(ptf.orientation_),
-    uwEqFactorI_(ptf.uwEqFactorI_)
+    uInEqFactorI_(ptf.uInEqFactorI_)
 {}
 
 
-Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
+Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
 (
-    const lbmWallFvPatchScalarField& tppsf,
+    const lbmInletFvPatchScalarField& tppsf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
     fixedValueFvPatchScalarField(tppsf, iF),
     dI_(tppsf.dI_),
-    idI_(tppsf.idI_),
     rhoName_(tppsf.rhoName_),
     orientation_(tppsf.orientation_),
-    uwEqFactorI_(tppsf.uwEqFactorI_)
+    uInEqFactorI_(tppsf.uInEqFactorI_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
-void Foam::lbmWallFvPatchScalarField::updateCoeffs()
+void Foam::lbmInletFvPatchScalarField::updateCoeffs()
 {
     if (updated())
     {
@@ -139,45 +136,44 @@ void Foam::lbmWallFvPatchScalarField::updateCoeffs()
     // current component field
     const tmp<Field<scalar>>& fiC = patchInternalField();
 
-    // inverse distribution
-    const tmp<Field<scalar>>& ifiC =
-      patch().lookupPatchField<volScalarField, scalar>
-      (
-        "f_"+name(idI_)
-      ).patchInternalField();
-
-    // inverse equilibrium distribution
-    const tmp<Field<scalar>>& ifieqC =
-      patch().lookupPatchField<volScalarField, scalar>
-      (
-        "feq_"+name(idI_)
-      ).patchInternalField();
-
+    // current component field gradient
+    const tmp<Field<vector>>&
+    gradfiC =
+    patch().lookupPatchField<volVectorField, vector>
+    (
+      "gradf_"+name(dI_)
+    ).patchInternalField();
 
     // equilibrium distribution
-    const tmp<Field<scalar>>& fieqC =
-      patch().lookupPatchField<volScalarField, scalar>
-      (
-        "feq_"+name(dI_)
-      ).patchInternalField();
+    const tmp<Field<scalar>>&
+    fieqC = patch().lookupPatchField<volScalarField, scalar>
+    (
+      "feq_"+name(dI_)
+    ).patchInternalField();
 
-    // compute equilibrium distribution to impose on the patch
-    const tmp<Field<scalar>>& fieqB = uwEqFactorI_*
-      this->patch().lookupPatchField<volScalarField, scalar>
-      (
-        rhoName_
-      ).patchInternalField();
+    // density
+    const tmp<Field<scalar>>&
+    rhoC = patch().lookupPatchField<volScalarField, scalar>
+    (
+      "rhoName_"
+    ).patchInternalField();
+
+    // extrapolate if unkown distribution
+    const tmp<Field<scalar>>&
+    dfiC = gradfiC & (patch().Cf() - patch().Cn());
 
   	operator==
     (
-      fieqB + (1-orientation_)*(fiC-fieqC) + (orientation_)*(ifiC-ifieqC)
+        fiC
+      + orientation_*dfiC
+      + (1-orientation_)*(uInEqFactorI_*rhoC - fieqC)
     );
 
     fixedValueFvPatchScalarField::updateCoeffs();
 }
 
 
-void Foam::lbmWallFvPatchScalarField::write(Ostream& os) const
+void Foam::lbmInletFvPatchScalarField::write(Ostream& os) const
 {
     fvPatchScalarField::write(os);
 
@@ -195,7 +191,7 @@ namespace Foam
     makePatchTypeField
     (
         fvPatchScalarField,
-        lbmWallFvPatchScalarField
+        lbmInletFvPatchScalarField
     );
 
 }

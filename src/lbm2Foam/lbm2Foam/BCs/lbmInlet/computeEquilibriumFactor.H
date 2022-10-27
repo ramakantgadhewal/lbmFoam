@@ -24,9 +24,6 @@
     velocitySet.subDict("c").lookup<scalar>("value")
   );
 
-  // inverse direction index
-  idI_ = velocitySet.subDict("inKey").lookup<label>(name(dI_));
-
   // 1. Read velocity patch data
   const tmp<Field<vector>>& UW =
     patch().lookupPatchField<volVectorField, vector>("U");
@@ -61,7 +58,7 @@
 
   // 3. save wall equilibrium velocity factor
   const scalar& cDotUwBycs2(ics2*(ci & uW));
-  uwEqFactorI_ = wi*
+  uInEqFactorI_ = wi*
                   (
                     1.
                   + cDotUwBycs2*(1+0.5*cDotUwBycs2)
