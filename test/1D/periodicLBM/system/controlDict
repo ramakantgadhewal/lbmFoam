@@ -25,7 +25,7 @@ stopAt          	endTime;
 
 endTime         	1;
 
-deltaX				    0.01;
+deltaX			0.01;
 
 deltaT          	0.0001;
 
@@ -45,25 +45,17 @@ timeFormat      	general;
 
 timePrecision   	6;
 
-//runTimeModifiable 	no;
+density			1000; // [kg/m3]
 
-//adjustTimeStep  	no;
+pressure		1.01e5; // [Pa]
 
-//maxCo           	5;
+//internal		  2;
 
-directions 			3;
+initTol			1e-12;
 
-density				1000; // [kg/m3]
+initIterMax 		1e3;
 
-pressure			 1e5; // [Pa]
-
-//internal			2;
-
-initTol				 1e-12;
-
-initIterMax 		1e6;
-
-initUfactor			0;
+initUfactor		0;
 
 
 // ************************************************************************* //

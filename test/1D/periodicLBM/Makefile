@@ -1,3 +1,4 @@
+SOLVER = lbm2Foam
 
 # test case employed directories
 LOG_DIR = log
@@ -23,7 +24,7 @@ $(MESHLOG): $(LOG_DIR)
 	blockMesh > $(MESHLOG)
 
 $(SIMLOG): $(MESHLOG)
-	lbm1Foam > $(SIMLOG)
+	$(SOLVER) > $(SIMLOG)
 
 $(OUTLOG): $(SIMLOG)
 	foamToVTK > $(OUTLOG)
