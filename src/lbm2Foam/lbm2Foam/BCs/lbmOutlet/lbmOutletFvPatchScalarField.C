@@ -65,7 +65,6 @@ Foam::lbmOutletFvPatchScalarField::lbmOutletFvPatchScalarField
     patch().lookupPatchField<volScalarField, scalar>(rhoName_)
   );
 
-
 }
 
 
@@ -102,7 +101,6 @@ Foam::lbmOutletFvPatchScalarField::lbmOutletFvPatchScalarField
   (
     patch().lookupPatchField<volScalarField, scalar>(rhoName_)
   );
-
 
 }
 
@@ -148,7 +146,6 @@ void Foam::lbmOutletFvPatchScalarField::updateCoeffs()
     {
         return;
     }
-
     // current component field
     const tmp<Field<scalar>>& fiC = patchInternalField();
 
@@ -170,12 +167,15 @@ void Foam::lbmOutletFvPatchScalarField::updateCoeffs()
     // extrapolate if unkown distribution
     const tmp<Field<scalar>>&
     dfiC = gradfiC & (patch().Cf() - patch().Cn());
-
-  	operator==
+    const Field<scalar>& fiB = static_cast<Field<scalar>>
     (
         fiC
       + orientation_*dfiC
       + (1-orientation_)*(uCEqFactorI_*rhoOut_ - fieqC)
+    );
+  	operator==
+    (
+        fiB
     );
 
     fixedValueFvPatchScalarField::updateCoeffs();

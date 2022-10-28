@@ -90,7 +90,6 @@ Foam::lbmWallFvPatchScalarField::lbmWallFvPatchScalarField
     }
   }
   orientation_ = relDir;
-
 }
 
 
@@ -170,9 +169,10 @@ void Foam::lbmWallFvPatchScalarField::updateCoeffs()
 
   	operator==
     (
-      fieqB + (1-orientation_)*(fiC-fieqC) + (orientation_)*(ifiC-ifieqC)
+        fieqB
+      + (1-orientation_)*(fiC-fieqC)
+      + (orientation_)*(ifiC-ifieqC)
     );
-
     fixedValueFvPatchScalarField::updateCoeffs();
 }
 

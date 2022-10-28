@@ -76,7 +76,7 @@ class lbmOutletFvPatchScalarField
 public:
 
     //- Runtime type information
-    TypeName("lbmWall");
+    TypeName("lbmOutlet");
 
 
     // Constructors

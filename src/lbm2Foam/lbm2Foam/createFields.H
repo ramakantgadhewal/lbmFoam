@@ -179,11 +179,10 @@
       "p",
       runTime.timeName(),
       mesh,
-      IOobject::NO_READ,
+      IOobject::MUST_READ,
       IOobject::AUTO_WRITE
     ),
-    mesh,
-		dimensionedScalar(dimPressure, pRef)
+    mesh
   );
 
 	// Momentum field
@@ -192,7 +191,7 @@
 	// Initializzation loop over velocity set
 	forAll(f, dI)
 	{
-
+		Info<<"Read particle field component: " << dI << endl;
 		// Read particle distribution
 		f.set
 		(
@@ -331,4 +330,11 @@
 				fvc::grad(f[dI])
 			)
 		);
+
 	} // end of loop over velocity set
+
+	// separate loop to initialize boundary conditions
+	forAll(f, dI)
+	{
+		f[dI].correctBoundaryConditions();
+	}

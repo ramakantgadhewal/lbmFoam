@@ -90,6 +90,7 @@ Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
   }
   orientation_ = relDir;
 
+  Info<< "index " << dI_ << " - inlet created" << endl;
 }
 
 
@@ -120,7 +121,9 @@ Foam::lbmInletFvPatchScalarField::lbmInletFvPatchScalarField
     rhoName_(tppsf.rhoName_),
     orientation_(tppsf.orientation_),
     uInEqFactorI_(tppsf.uInEqFactorI_)
-{}
+{
+  Info<< "index " << dI_ << " - inlet created through tppsf" << endl;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -155,18 +158,20 @@ void Foam::lbmInletFvPatchScalarField::updateCoeffs()
     const tmp<Field<scalar>>&
     rhoC = patch().lookupPatchField<volScalarField, scalar>
     (
-      "rhoName_"
+      rhoName_
     ).patchInternalField();
-
     // extrapolate if unkown distribution
     const tmp<Field<scalar>>&
     dfiC = gradfiC & (patch().Cf() - patch().Cn());
-
-  	operator==
+    const Field<scalar>& fiB = static_cast<Field<scalar>>
     (
         fiC
       + orientation_*dfiC
       + (1-orientation_)*(uInEqFactorI_*rhoC - fieqC)
+    );
+  	operator==
+    (
+        fiB
     );
 
     fixedValueFvPatchScalarField::updateCoeffs();

@@ -73,7 +73,7 @@ class lbmInletFvPatchScalarField
 public:
 
     //- Runtime type information
-    TypeName("lbmWall");
+    TypeName("lbmInlet");
 
 
     // Constructors
