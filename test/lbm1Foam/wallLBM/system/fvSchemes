@@ -22,14 +22,16 @@ ddtSchemes
 
 gradSchemes
 {
-    default         leastSquares; //Gauss linear; //Gauss linear is widely used
+    default         leastSquares; //leastSquares; //Gauss linear is widely used
 								    // leastSquares is employed sometimes in FvLBM
 }
 
 divSchemes
 {
-    default        	Gauss linear;
-    //div(xi,"f.+")   Gauss linear; //bounded Gauss upwind; // Gauss linearUpwind grad(f); // This was found in scalarTransportFoam
+    default         Gauss upwind;
+    div(xi,f_1)     Gauss linearUpwind grad(f_1);
+    div(xi,f_2)     Gauss linearUpwind grad(f_2);
+    div(xi,f_0)     Gauss linear; //bounded Gauss upwind; // Gauss linearUpwind grad(f); // This was found in scalarTransportFoam
 											// however there are a variety of bounded methods recomended for transport
 }
 
@@ -41,11 +43,15 @@ laplacianSchemes
 interpolationSchemes
 {
     default         linear;
+    f_1             linearUpwind;
+    f_2             linearUpwind;
+    feq_1           linearUpwind;
+    feq_2           linearUpwind;
 }
 
 snGradSchemes
 {
-    default         corrected;
+    default         orthogonal;
 }
 
 
